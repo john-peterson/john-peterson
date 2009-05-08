@@ -253,7 +253,7 @@ int main(int ArgC, char *ArgV[])
 	"        Close this Window to Disable the HotKey  \n", KeyStr);
 	WelcomeMessage[1] = StringFromFormat(
 	"                      SETTINGS:                  \n"
-	"    Borders: %s | Screen: %s | V. Resize: %0.3f  \n",
+	"   Borders: %s | Screen: %s | V. Resize: %0.3f\n",
 	Vista ? "Vista" : "XP   ", FiveFour ? "5:4" : "16:10", TOO_SMALL_RATIO);
 	ClearScreen(); PrintMessage(WelcomeMessage, 2); WhiteLine();
 
