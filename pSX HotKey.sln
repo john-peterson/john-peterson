@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DLL", "DLL\DLL.vcproj", "{8A70EFE9-B108-4762-B954-DD0D3818F1F5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HotKey", "pSX HotKey\pSX HotKey.vcproj", "{29B48ACE-EA42-4137-9EE2-53080A583ED1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8A70EFE9-B108-4762-B954-DD0D3818F1F5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8A70EFE9-B108-4762-B954-DD0D3818F1F5}.Debug|Win32.Build.0 = Debug|Win32
+		{8A70EFE9-B108-4762-B954-DD0D3818F1F5}.Release|Win32.ActiveCfg = Release|Win32
+		{8A70EFE9-B108-4762-B954-DD0D3818F1F5}.Release|Win32.Build.0 = Release|Win32
+		{29B48ACE-EA42-4137-9EE2-53080A583ED1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{29B48ACE-EA42-4137-9EE2-53080A583ED1}.Debug|Win32.Build.0 = Debug|Win32
+		{29B48ACE-EA42-4137-9EE2-53080A583ED1}.Release|Win32.ActiveCfg = Release|Win32
+		{29B48ACE-EA42-4137-9EE2-53080A583ED1}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
