@@ -21,12 +21,35 @@
 /*
 	Function:	Produce a full screen mode for pSX that removes the black borders that occur in some games.
 				Mostly on the top and bottom of the screen, when they occur.
+
 	How to use: Open the program, press <Esc> to toggle the pSX window size. The hotkey is customizable from
 				the command line, any Microsoft Virtual Key code can be used for the hotkey.
+
 	Critical assumptions:	The program will look for a window with the name "pSX v1.13". No other windows will
 							be considered.
+
 	DLL Project:	The DLL is nessesarey for hiding the mouse cursor in full screen mode. The DLL will install
 					a mouse event hook in pSX's thread.
+
+	Command lines:	Command lines can be written in two groups of letters, the letters are
+						v:		Vista size borders (stretch the window more because it assumes 8 px borders)
+						1:		Stretch the picture vertically by a factor of 0.067
+						2:		Stretch the picture vertically by a factor of 0.133
+						f:		Some adjustments to the window scaling due to the fact that the game picture
+								don't follow the pSX window if it means that ther picture will fall outside the
+								top of the desktop screen. This only occurs on 5:4 screens (and possible on 4:3
+								screens), 16:10 screens don't have this problems. It can't be fixed with any
+								aspect ratio correction option, they only seems to have an effect in pSX's full-
+								screen mode.
+						VK ID:	Microsoft Virtual Key code to use as a fullscreen hotkey. The codes must be
+								entered in hexadecimal form. See http://msdn.microsoft.com/en-us/library/ms6455
+								0(VS.85).aspx for a list of key codes.
+					Command lines example:
+						'pSX HotKey.exe vf2 0d': 
+								- Vista size borders
+								- f ('five-four' mode)
+								- 0.133 black borders correction
+								- VK_ENTER (0x0d) used as fullscreen hotkey		
 */
 ///////////////////////////////////////
 
