@@ -102,7 +102,7 @@ std::string StringFromFormat(const char* format, ...)
 HWND WindowName ()
 {
 	HWND hWnd = GetConsoleWindow();
-	SetWindowText(hWnd, "HotKey Enabled");
+	SetWindowText(hWnd, "HotKey");
 	return hWnd;
 }
 //////////////////////////////////////////////
@@ -169,8 +169,10 @@ unsigned long HWND2Thread(HWND hWnd)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Wait for pSX
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
-void Wait4pSX() 
-{ 
+void Wait4pSX(HWND hWnd) 
+{
+	SetWindowText(hWnd, "HotKey Disabled ...");
+
 	static int c, iDot;
 	std::string Dot;
 	c++;
@@ -191,8 +193,11 @@ void Wait4pSX()
 	// Run again
 	Sleep(1000 / 25);
 }
-void StopWait4pSX() 
+void StopWait4pSX(HWND hWnd) 
 { 
+	// Update the title
+	SetWindowText(hWnd, "HotKey Enabled");
+
 	WelcomeMessage[2] = StringFromFormat(
 	"                       STATUS:                   \n"
 	"           pSX Fullscreen Mode HotKey Enabled    \n");
@@ -261,13 +266,13 @@ int main(int ArgC, char *ArgV[])
 	{
 		while (FindWindow(NULL, WINDOW_TITLE) == NULL && !EscWindow(hWnd))
 		{
-			Wait4pSX();
+			Wait4pSX(hWnd);
 		}
 		if (EscWindow(hWnd)) ExitProcess(0);
 	}
 	// ---------------------------------------------
 
-	StopWait4pSX();
+	StopWait4pSX(hWnd);
 
 	HWND hWndTarget = FindWindow(NULL, WINDOW_TITLE);
 	//printf ("hWndTarget: 0x%08x\n", hWndTarget);
@@ -306,13 +311,13 @@ int main(int ArgC, char *ArgV[])
 			if ((hWndTarget = FindWindow(NULL, WINDOW_TITLE)) == NULL)
 			{
 				Waiting4pSX = true;
-				Wait4pSX();
+				Wait4pSX(hWnd);
 			}
 			else
 			{
 				if (Waiting4pSX)
 				{
-					StopWait4pSX();
+					StopWait4pSX(hWnd);
 					// Install the DLL into pSX again
 					ThreadID = HWND2Thread(hWndTarget);
 					InsCBHook(ThreadID);
