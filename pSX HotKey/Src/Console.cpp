@@ -77,7 +77,7 @@ void LetterSpace()
 
 	// Console size
 	int Width = 53;
-	int Height = 12;
+	int Height = 13;
 
 	SMALL_RECT coo = {0,0, Width, Height}; // top, left, right, bottom
 	bool SW = SetConsoleWindowInfo(hConsole, TRUE, &coo);
