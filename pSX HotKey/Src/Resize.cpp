@@ -32,11 +32,12 @@ bool FSMode = false;
 //////////////////////////////////////////////////////////////////////////////////////
 // Resize Window
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
-void ResizeWindow(int Mode, bool Vista, bool FiveFour)
+void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 {
 	// Get HWND
 	HWND hWnd = FindWindow(NULL, WINDOW_TITLE);
 	HWND hWndTask = FindWindow("Shell_traywnd", "");
+	HWND hWndTaskButton = FindWindow("Button", "Start");
 
 	// Get current resolution
 	RECT Rc, WinRc, RcTask;
@@ -48,6 +49,10 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour)
 
 	// Full screen mode
 	FSMode = false;
+	SetWindowLong(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+	LetterSpace();
+	ShowWindow(hWndTask, 1);
+	if (hWndTaskButton) ShowWindow(hWndTaskButton, 1);
 
 	// ----------------------------------------------------------------------
 	// Select beetween three screen modes
@@ -111,6 +116,19 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour)
 		Height = Height + BorderPixelSize;
 		Top = Top - BorderPixelSize / 2;
 
+		// The console should still be fullscreen
+		int ConsoleLeft = Left, ConsoleWidth = Width;
+
+		// Keep 4:3 aspect ratio
+		int NewWidth;
+		if (KeepAR)
+		{
+			NewWidth = Rc.bottom * (4.0/3.0);
+			int LeftRightSpace = Width - NewWidth;
+			Left = Left + LeftRightSpace / 2;
+			Width = NewWidth;
+		}
+
 		// The picture refused to go to full screen on my 5:4 screen because it would not follow the pSX window
 		// upwards into negetive territory. With these adjustments the bottom border will be removed, but the
 		// border will be left as it is.
@@ -122,13 +140,18 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour)
 			Top = -MenuBarHeight;
 		}
 
+		SetWindowLong(hWnd, GWL_STYLE, WS_VISIBLE);
+		PixelSpace(ConsoleLeft - 2, Top, ConsoleWidth, Height);
+		ShowWindow(hWndTask, 0);
+		if (hWndTaskButton) ShowWindow(hWndTaskButton, 0);
+		
 		// Debug
-		//printf("Width:%i Height:%i Top:%i | BorderPixelSize:%i\n", Width, Height, Top, BorderPixelSize);		
+		//printf("Width:%i[%i] Height:%i Top:%i | BorderPixelSize:%i\n", Width, NewWidth, Height, Top, BorderPixelSize);
 	}
 	// ----------------------------------------------------------
 
 	// Set window size
-	SetWindowPos(hWnd, HWND_TOP, Left,Top, Width,Height, SWP_NOSENDCHANGING);
+	SetWindowPos(hWnd, HWND_TOP, Left,Top, Width,Height, SWP_NOSENDCHANGING | SWP_FRAMECHANGED);
 	// Show the window
 	SetForegroundWindow(hWnd);
 }

@@ -43,6 +43,12 @@ void BlueBackground()
 	WORD Color = SCR_BACKGROUND;
 	SetConsoleTextAttribute(hConsole, Color);
 }
+void BlackBackground()
+{
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	WORD Color = NULL;
+	SetConsoleTextAttribute(hConsole, Color);
+}
 void WhiteLine()
 {
 	RegularText();
@@ -70,8 +76,20 @@ void PrintMessage(std::string Str[3], int Rows)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Console letter space
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+void Position()
+{
+	RECT Rc;
+	GetWindowRect(GetConsoleWindow(), &Rc);
+	ConsoleLeft = Rc.left;
+	ConsoleTop = Rc.top;
+}
 void LetterSpace()
 {
+	// Redraw the screen
+	BlueBackground();
+	ClearScreen();
+	StopWait4pSX(GetConsoleWindow());
+
 	// Console handle
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); 
 
@@ -79,18 +97,56 @@ void LetterSpace()
 	int Width = 53;
 	int Height = 12;
 
-	SMALL_RECT coo = {0,0, Width, Height}; // top, left, right, bottom
-	bool SW = SetConsoleWindowInfo(hConsole, TRUE, &coo);
-
+	// Get console info
 	CONSOLE_SCREEN_BUFFER_INFO ConInfo;
 	GetConsoleScreenBufferInfo(hConsole, &ConInfo);
 
-	// Change screen buffer to screen size
+	// Change the screen buffer window size
+	SMALL_RECT coo = {0,0, Width, Height}; // top, left, right, bottom
+	bool SW = SetConsoleWindowInfo(hConsole, TRUE, &coo);
+
+	// Change screen buffer to the screen buffer window size
 	COORD Co = {Width + 1, Height + 1};
 	bool SB = SetConsoleScreenBufferSize(hConsole, Co);
 
+	// Resize the window too
+	MoveWindow(GetConsoleWindow(), ConsoleLeft,ConsoleTop, (Width*8 + 50),(Height*12 + 50), true);
+
 	// Logging
-	//printf("[SB:%i SW:%i] X:%i Y:%i | W:%i H:%i\n", SB, SW, ConInfo.dwSize.X, ConInfo.dwSize.Y, Width, Height);
+	//printf("[SB:%i SW:%i] X:%i Y:%i W:%i | W:%i H:%i\n", SB, SW, ConInfo.dwSize.X, ConInfo.dwSize.Y,
+	//	(ConInfo.srWindow.Right - ConInfo.srWindow.Left), Width, Height);
+}
+void PixelSpace(int Left, int Top, int Width, int Height)
+{
+	// Clear the screen
+	BlackBackground();
+	ClearScreen();
+
+	// Console handle
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	// Get console info
+	CONSOLE_SCREEN_BUFFER_INFO ConInfo;
+	GetConsoleScreenBufferInfo(hConsole, &ConInfo);
+
+	// Letter space
+	int LWidth = floor((float)(Width / 8));
+	int LHeight = floor((float)(Height / 12));	
+
+	// Change the screen buffer window size
+	SMALL_RECT coo = {0,0, LWidth, LHeight}; // top, left, right, bottom
+	bool SW = SetConsoleWindowInfo(hConsole, TRUE, &coo);
+
+	// Change screen buffer to the screen buffer window size
+	COORD Co = {LWidth + 1, LHeight + 1};
+	bool SB = SetConsoleScreenBufferSize(hConsole, Co);
+
+	// Resize the window too
+	MoveWindow(GetConsoleWindow(), Left,Top, (Width*8 + 50),(Height*12 + 50), true);
+
+	// Logging
+	//printf("[SB:%i SW:%i] X:%i Y:%i W:%i | W:%i H:%i\n", SB, SW, ConInfo.dwSize.X, ConInfo.dwSize.Y,
+	//	(ConInfo.srWindow.Right - ConInfo.srWindow.Left), Width, Height);
 }
 /////////////////////////////////////
 

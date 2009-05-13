@@ -33,6 +33,7 @@
 
 	Command lines:	Command lines can be written in two groups of letters, the letters are
 						v:		Vista size borders (stretch the window more because it assumes 8 px borders)
+						k:		Keep 4:3 aspect ratio in fullscreen mode
 						1:		Stretch the picture vertically by a factor of 0.067
 						2:		Stretch the picture vertically by a factor of 0.133
 						f:		Some adjustments to the window scaling due to the fact that the game picture
@@ -63,6 +64,7 @@ bool KeyPressed = false;
 int FS_KEY = VK_ESCAPE;
 float TOO_SMALL_RATIO = 0;
 std::string WelcomeMessage[3];
+int ConsoleLeft, ConsoleTop;
 /////////////////////////////////////
 
 
@@ -211,7 +213,7 @@ void StopWait4pSX(HWND hWnd)
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 int main(int ArgC, char *ArgV[])
 {
-	bool Vista = false, FiveFour = false;
+	bool Vista = false, FiveFour = false, KeepAR = false;
 
 	// ----------------------------------------------------------
 	// Get command line arguments
@@ -225,6 +227,7 @@ int main(int ArgC, char *ArgV[])
 			std::string TmpStr = SArgV.substr(i, 1);
 			if (TmpStr == "v") Vista = true;
 			if (TmpStr == "f") FiveFour = true;
+			if (TmpStr == "k") KeepAR = true;
 			if (TmpStr == "1") TOO_SMALL_RATIO = TOO_SMALL_RATIO1;
 			if (TmpStr == "2") TOO_SMALL_RATIO = TOO_SMALL_RATIO2;
 		}
@@ -238,6 +241,7 @@ int main(int ArgC, char *ArgV[])
 
 	// Setup window
 	WindowIcon();
+	Position();
 	LetterSpace();
 	DisableCursor();
 	HWND hWnd = WindowName();
@@ -333,7 +337,7 @@ int main(int ArgC, char *ArgV[])
 				GetWindowRect(hWndTarget, &WinRc);
 				if (FSMode && WinRc.bottom < Rc.bottom)
 				{
-					ResizeWindow(2, Vista, FiveFour);
+					ResizeWindow(2, Vista, FiveFour, KeepAR);
 				}
 				// ----------------------------------------------
 
@@ -341,7 +345,7 @@ int main(int ArgC, char *ArgV[])
 				if (GetAsyncKeyState(FS_KEY) && !KeyPressed)
 				{
 					KeyPressed = true;
-					if (ResizeKey(hWndTarget, hWnd)) ResizeWindow(-1, Vista, FiveFour);
+					if (ResizeKey(hWndTarget, hWnd)) ResizeWindow(-1, Vista, FiveFour, KeepAR);
 				}
 				else if (!GetAsyncKeyState(FS_KEY) && KeyPressed)
 				{

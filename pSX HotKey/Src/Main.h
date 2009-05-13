@@ -42,16 +42,18 @@ extern bool FSMode;
 extern float TOO_SMALL_RATIO;
 // Active too big ratio
 #define SCR_BACKGROUND BACKGROUND_BLUE;
+// Save the initial console window location
+extern int ConsoleLeft, ConsoleTop;
 
-
-void ResizeWindow(int, bool, bool);
+void ResizeWindow(int, bool, bool, bool);
 std::string VKToString(int);
 
-void RegularText(); void BrightText(); void BlueBackground();
+void RegularText(); void BrightText(); void BlueBackground(); void BlackBackground();
 void WhiteLine (); void PrintMessage(std::string Str[3], int);
-void LetterSpace();
+void Position(); void LetterSpace(); void PixelSpace(int, int, int, int);
 void ClearScreen();
 void DisableCursor();
+void StopWait4pSX(HWND hWnd);
 HWND GetHwnd();
 u32 Str2Hex(const char* _szValue);
 //////////////////////////////////////////
