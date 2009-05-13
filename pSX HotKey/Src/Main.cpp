@@ -44,7 +44,7 @@
 								screen mode.
 						VK ID:	Microsoft Virtual Key code to use as a fullscreen hotkey. The codes must be
 								entered in hexadecimal form. See http://msdn.microsoft.com/en-us/library/ms6455
-								0(VS.85).aspx for a list of key codes.
+								40(VS.85).aspx for a list of key codes.
 					Command lines example:
 						'pSX HotKey.exe vf2 0d': 
 								- Vista size borders
@@ -60,7 +60,7 @@
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 #include "Main.h"
 
-bool KeyPressed = false;
+bool KeyPressed = false, ZoomKeyPressed = false;
 int FS_KEY = VK_ESCAPE;
 float TOO_SMALL_RATIO = 0;
 std::string WelcomeMessage[3];
@@ -148,6 +148,11 @@ bool ResizeKey(HWND hWndTarget, HWND hWnd)
 	// Accept the fullscreen key when the console is selected to
 	return (GetAsyncKeyState(FS_KEY) && (GetForegroundWindow() == hWndTarget || GetForegroundWindow() == hWnd));
 }
+bool ZoomKey(HWND hWnd)
+{
+	// Z key
+	return (GetAsyncKeyState(0x5A) && GetForegroundWindow() == hWnd);
+}
 //////////////////////////////////////////////
 
 
@@ -171,6 +176,10 @@ unsigned long HWND2Thread(HWND hWnd)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Wait for pSX
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+void DoPrintMessage() 
+{
+	ClearScreen(); PrintMessage(WelcomeMessage, 3); WhiteLine();
+}
 void Wait4pSX(HWND hWnd) 
 {
 	SetWindowText(hWnd, "HotKey Disabled ...");
@@ -189,7 +198,7 @@ void Wait4pSX(HWND hWnd)
 		WelcomeMessage[2] = StringFromFormat(
 		"                       STATUS:                   \n"
 		"                   Waiting for pSX %s            \n", Dot.c_str());
-		ClearScreen(); PrintMessage(WelcomeMessage, 3); WhiteLine();
+		DoPrintMessage();
 	}
 
 	// Run again
@@ -203,7 +212,14 @@ void StopWait4pSX(HWND hWnd)
 	WelcomeMessage[2] = StringFromFormat(
 	"                       STATUS:                   \n"
 	"           pSX Fullscreen Mode HotKey Enabled    \n");
-	ClearScreen(); PrintMessage(WelcomeMessage, 3); WhiteLine();
+	DoPrintMessage();
+}
+void SettingsMessage(HWND hWnd, bool Vista, bool FiveFour) 
+{ 
+	WelcomeMessage[1] = StringFromFormat(
+	"                      SETTINGS:                  \n"
+	"   Borders: %s | Screen: %s | V. Resize: %0.3f\n",
+	Vista ? "Vista" : "XP   ", FiveFour ? "5:4" : "16:10", TOO_SMALL_RATIO);
 }
 //////////////////////////////////////////////
 
@@ -214,6 +230,7 @@ void StopWait4pSX(HWND hWnd)
 int main(int ArgC, char *ArgV[])
 {
 	bool Vista = false, FiveFour = false, KeepAR = false;
+	int ZoomMode = 0;
 
 	// ----------------------------------------------------------
 	// Get command line arguments
@@ -228,8 +245,8 @@ int main(int ArgC, char *ArgV[])
 			if (TmpStr == "v") Vista = true;
 			if (TmpStr == "f") FiveFour = true;
 			if (TmpStr == "k") KeepAR = true;
-			if (TmpStr == "1") TOO_SMALL_RATIO = TOO_SMALL_RATIO1;
-			if (TmpStr == "2") TOO_SMALL_RATIO = TOO_SMALL_RATIO2;
+			if (TmpStr == "1") {ZoomMode = 1; TOO_SMALL_RATIO = TOO_SMALL_RATIO1;}
+			if (TmpStr == "2") {ZoomMode = 2; TOO_SMALL_RATIO = TOO_SMALL_RATIO2;}
 		}
 	}
 	if (ArgC > 2)
@@ -251,7 +268,6 @@ int main(int ArgC, char *ArgV[])
 	// ----------------------------------------------------------
 	// Print instruction
 	// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
-
 	// Update the HotKey name
 	char KeyStr[64] = {0};
 	strcpy(KeyStr, VKToString(FS_KEY).c_str());
@@ -260,20 +276,8 @@ int main(int ArgC, char *ArgV[])
 	"                        USAGE:                   \n"
 	"     Press <%s> To Enter and Exit Fullscreen Mode\n"
 	"        Close this Window to Disable the HotKey  \n", KeyStr);
-	WelcomeMessage[1] = StringFromFormat(
-	"                      SETTINGS:                  \n"
-	"   Borders: %s | Screen: %s | V. Resize: %0.3f\n",
-	Vista ? "Vista" : "XP   ", FiveFour ? "5:4" : "16:10", TOO_SMALL_RATIO);
+	SettingsMessage(hWnd, Vista, FiveFour);
 	ClearScreen(); PrintMessage(WelcomeMessage, 2); WhiteLine();
-
-	if (FindWindow(NULL, WINDOW_TITLE) == NULL)
-	{
-		while (FindWindow(NULL, WINDOW_TITLE) == NULL && !EscWindow(hWnd))
-		{
-			Wait4pSX(hWnd);
-		}
-		if (EscWindow(hWnd)) ExitProcess(0);
-	}
 	// ---------------------------------------------
 
 	StopWait4pSX(hWnd);
@@ -282,100 +286,120 @@ int main(int ArgC, char *ArgV[])
 	//printf ("hWndTarget: 0x%08x\n", hWndTarget);
 	//printf ("hProcess: 0x%08x\n", hProcess);
 
-	if(hWndTarget > 0)
+	// ----------------------------------------------------------------------
+	// Load DLL to install hooks to hide the mouse cursor in full screen mode
+	// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+	unsigned long ThreadID = HWND2Thread(hWndTarget);
+	HINSTANCE hInstDLL = LoadLibrary((LPCTSTR) "DLL.dll");
+	typedef BOOL (CALLBACK *InsHook)(unsigned long);
+	//typedef BOOL (CALLBACK *MouseProc)(bool); 
+	InsHook InsCBHook;
+	if (hInstDLL > 0)
 	{
-		// ----------------------------------------------------------------------
-		// Load DLL and install hooks to hide the mouse cursor in full screen mode
-		// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
-		unsigned long ThreadID = HWND2Thread(hWndTarget);
-		HINSTANCE hInstDLL = LoadLibrary((LPCTSTR) "DLL.dll");
-		typedef BOOL (CALLBACK *InsHook)(unsigned long);
-		InsHook InsCBHook;
-		if (hInstDLL > 0)
-		{
-			InsCBHook = (InsHook)GetProcAddress(hInstDLL, "InstallHook");
-			InsCBHook(ThreadID);
-			//printf("Installed\n");
-		}
-		else
-		{
-			//printf("Failed\n");
-		}
-
-		typedef BOOL (CALLBACK *MouseProc)(bool); 
-		MouseProc pMouseProc = (MouseProc)GetProcAddress(hInstDLL, "HideMouse");
-		// -------------------------------------
-
-		// Check for keys
-		while (!EscWindow(hWnd))
-		{
-			static bool Waiting4pSX = false;
-
-			// If the pSX window goes away
-			if ((hWndTarget = FindWindow(NULL, WINDOW_TITLE)) == NULL)
-			{
-				Waiting4pSX = true;
-				Wait4pSX(hWnd);
-			}
-			else
-			{
-				if (Waiting4pSX)
-				{
-					StopWait4pSX(hWnd);
-					// Install the DLL into pSX again
-					ThreadID = HWND2Thread(hWndTarget);
-					InsCBHook(ThreadID);
-				}
-				Waiting4pSX = false;
-
-				// ----------------------------------------------------------------------
-				// When entering and ending fast forwarding the wind will jump away from the maximized mode
-				// This will kind of fix that by changing it back to full screen.
-				// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
-				RECT Rc, WinRc;
-				GetWindowRect(GetDesktopWindow(), &Rc);
-				GetWindowRect(hWndTarget, &WinRc);
-				if (FSMode && WinRc.bottom < Rc.bottom)
-				{
-					ResizeWindow(2, Vista, FiveFour, KeepAR);
-				}
-				// ----------------------------------------------
-
-				// KeyPressed will disable repeated events
-				if (GetAsyncKeyState(FS_KEY) && !KeyPressed)
-				{
-					KeyPressed = true;
-					if (ResizeKey(hWndTarget, hWnd)) ResizeWindow(-1, Vista, FiveFour, KeepAR);
-				}
-				else if (!GetAsyncKeyState(FS_KEY) && KeyPressed)
-				{
-					KeyPressed = false;
-				}
-
-				Sleep(1000 / 25);
-			}
-
-			// Logging
-			//ClearScreen();
-			//printf("Ht:%i, H:%i, KeyF:%i", hWndTarget, hWnd, GetAsyncKeyState(FS_KEY));
-		}
-
-		// ----------------------------------------------------------------------
-		// Unload hooks
-		// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
-		if (hInstDLL > 0)
-		{
-			typedef BOOL (CALLBACK *UnsHook)(); 
-			UnsHook UnstCBHook = (UnsHook)GetProcAddress(hInstDLL, "UnHook"); 
-			UnstCBHook();
-		}
-		// -----------------------------
+		InsCBHook = (InsHook)GetProcAddress(hInstDLL, "InstallHook");
+		//MouseProc pMouseProc = (MouseProc)GetProcAddress(hInstDLL, "HideMouse");
+		//printf("Installed\n");
 	}
 	else
 	{
-		// This should not happen
+		//printf("Failed\n");
 	}
+	// -------------------------------------
 
+	// ----------------------------------------------------------------------
+	// Main loop
+	// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+	while (!EscWindow(hWnd))
+	{
+		// Default to true to install the DLL
+		static bool Waiting4pSX = true;
+
+		// If the pSX window goes away
+		if ((hWndTarget = FindWindow(NULL, WINDOW_TITLE)) == NULL)
+		{
+			Waiting4pSX = true;
+			Wait4pSX(hWnd);
+		}
+		else
+		{
+			if (Waiting4pSX)
+			{
+				StopWait4pSX(hWnd);
+				// Install the DLL into pSX again
+				if (hInstDLL > 0)
+				{
+					ThreadID = HWND2Thread(hWndTarget);
+					InsCBHook(ThreadID);
+				}
+			}
+			Waiting4pSX = false;
+
+			// ----------------------------------------------------------------------
+			// When entering and ending fast forwarding the wind will jump away from the maximized mode
+			// This will kind of fix that by changing it back to full screen.
+			// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+			RECT Rc, WinRc;
+			GetWindowRect(GetDesktopWindow(), &Rc);
+			GetWindowRect(hWndTarget, &WinRc);
+			if (FSMode && WinRc.bottom < Rc.bottom)
+			{
+				ResizeWindow(2, Vista, FiveFour, KeepAR);
+			}
+			// ----------------------------------------------
+
+			// KeyPressed will disable repeated events
+			if (GetAsyncKeyState(FS_KEY) && !KeyPressed)
+			{
+				KeyPressed = true;
+				if (ResizeKey(hWndTarget, hWnd)) ResizeWindow(-1, Vista, FiveFour, KeepAR);
+			}
+			else if (!GetAsyncKeyState(FS_KEY) && KeyPressed)
+			{
+				KeyPressed = false;
+			}
+
+			Sleep(1000 / 25);
+		}
+
+		// Togle zoom mode
+		if (ZoomKey(hWnd) && !ZoomKeyPressed)
+		{
+			ZoomKeyPressed = true;
+			ZoomMode++;
+			if (ZoomMode > 2) ZoomMode = 0;
+			switch(ZoomMode)
+			{
+				case 0: TOO_SMALL_RATIO = TOO_SMALL_RATIO0; break;
+				case 1: TOO_SMALL_RATIO = TOO_SMALL_RATIO1; break;
+				case 2: TOO_SMALL_RATIO = TOO_SMALL_RATIO2; break;
+			}
+			SettingsMessage(hWnd, Vista, FiveFour);
+			DoPrintMessage();
+		}
+		else if (!ZoomKey(hWnd) && ZoomKeyPressed)
+		{
+			ZoomKeyPressed = false;
+		}
+
+		// Logging
+		//ClearScreen();
+		//printf("Ht:%i, H:%i, KeyF:%i", hWndTarget, hWnd, GetAsyncKeyState(FS_KEY));
+	}
+	// -------------------------------------
+
+
+	// ----------------------------------------------------------------------
+	// Unload hooks
+	// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+	if (hInstDLL > 0)
+	{
+		typedef BOOL (CALLBACK *UnsHook)(); 
+		UnsHook UnstCBHook = (UnsHook)GetProcAddress(hInstDLL, "UnHook"); 
+		UnstCBHook();
+	}
+	// -----------------------------
+
+	// End program
 	return 0;
 }
 //////////////////////////////////////////////

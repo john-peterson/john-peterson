@@ -64,8 +64,6 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 	{
 		// Shrink the window if it's at least one pixel bigger than the dektop height
 		if (WinRc.bottom - WinRc.top > Rc.bottom)
-			Mode = 1;
-		else if (WinRc.bottom - WinRc.top == ClientHeight)
 			Mode = 0;
 		else
 			Mode = 2;
@@ -77,7 +75,7 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 	// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 	if (Mode == 1)
 	{
-		// Produce width and height
+		// Maximized window
 		Width = Rc.right;
 		Height = Rc.bottom - TaskHeight;
 		Left = 0;
@@ -97,17 +95,15 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 		FSMode = true;
 
 		// Produce width
-		int BorderWidth;
-		if (Vista) BorderWidth = 8;
-			else  BorderWidth = 4; // XP
+		int BorderWidth = 0;
 		Width = Rc.right + BorderWidth * 2;
 		Left = -BorderWidth;
 
 		// Produce height
 		// First remove the menu bar
 		int MenuBarHeight;
-		if (Vista) MenuBarHeight = 48;
-			else MenuBarHeight = 50;  // XP
+		if (Vista) MenuBarHeight = 20;
+			else MenuBarHeight = 19;  // XP
 		Height = Rc.bottom + MenuBarHeight + BorderWidth;
 		Top = -MenuBarHeight;
 
@@ -118,6 +114,9 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 
 		// The console should still be fullscreen
 		int ConsoleLeft = Left, ConsoleWidth = Width;
+		int ConsoleBorderWidth = 0;
+		if (Vista) ConsoleBorderWidth = 8 + 2;
+			else ConsoleBorderWidth = 4 + 9;  // XP
 
 		// Keep 4:3 aspect ratio
 		int NewWidth;
@@ -141,7 +140,7 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 		}
 
 		SetWindowLong(hWnd, GWL_STYLE, WS_VISIBLE);
-		PixelSpace(ConsoleLeft - 2, Top, ConsoleWidth, Height);
+		PixelSpace(ConsoleLeft - ConsoleBorderWidth, Top - ConsoleBorderWidth, ConsoleWidth, Height);
 		ShowWindow(hWndTask, 0);
 		if (hWndTaskButton) ShowWindow(hWndTaskButton, 0);
 		
@@ -153,6 +152,7 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 	// Set window size
 	SetWindowPos(hWnd, HWND_TOP, Left,Top, Width,Height, SWP_NOSENDCHANGING | SWP_FRAMECHANGED);
 	// Show the window
+	//SetForegroundWindow(GetConsoleWindow());
 	SetForegroundWindow(hWnd);
 }
 ////////////////////////////////////////////////
