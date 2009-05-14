@@ -75,11 +75,16 @@ u32 Str2Hex(const char* _szValue);
 	#define TOO_SMALL_RATIO1 0.067
 /*
 	#2
-		Final Fantasy 7 (PAL): Top and bottom
+		Chrono Cross (NTSC): Top and bottom
 */
-	#define TOO_SMALL_RATIO2 0.133
+	#define TOO_SMALL_RATIO2 0.100
 /*
 	#3
+		Final Fantasy 7 (PAL): Top and bottom
+*/
+	#define TOO_SMALL_RATIO3 0.134
+/*
+	#4
 		Metal Gear Solid (PAL): Right
 */
 /////////////////////////////////////

@@ -247,6 +247,7 @@ int main(int ArgC, char *ArgV[])
 			if (TmpStr == "k") KeepAR = true;
 			if (TmpStr == "1") {ZoomMode = 1; TOO_SMALL_RATIO = TOO_SMALL_RATIO1;}
 			if (TmpStr == "2") {ZoomMode = 2; TOO_SMALL_RATIO = TOO_SMALL_RATIO2;}
+			if (TmpStr == "3") {ZoomMode = 3; TOO_SMALL_RATIO = TOO_SMALL_RATIO3;}
 		}
 	}
 	if (ArgC > 2)
