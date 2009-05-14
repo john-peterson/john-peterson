@@ -86,9 +86,11 @@ void Position()
 void LetterSpace()
 {
 	// Redraw the screen
-	BlueBackground();
-	ClearScreen();
-	StopWait4pSX(GetConsoleWindow());
+	#ifndef LOGGING
+		BlueBackground();
+		ClearScreen();
+		StopWait4pSX(GetConsoleWindow());
+	#endif
 
 	// Console handle
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); 
@@ -119,8 +121,10 @@ void LetterSpace()
 void PixelSpace(int Left, int Top, int Width, int Height)
 {
 	// Clear the screen
-	BlackBackground();
-	ClearScreen();
+	#ifndef LOGGING
+		BlackBackground();
+		ClearScreen();
+	#endif
 
 	// Console handle
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);

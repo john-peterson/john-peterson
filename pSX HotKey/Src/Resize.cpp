@@ -122,7 +122,7 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 		// Then remove the black borders
 		BorderPixelSize = Rc.bottom * TOO_SMALL_RATIO;		
 		Height = Height + BorderPixelSize;
-		Top = Top - BorderPixelSize / 2;
+		Top = Top - BorderPixelSize / 2.0;
 
 		// The console should still be fullscreen
 		int ConsoleLeft = Left, ConsoleWidth = Width;
@@ -156,7 +156,9 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 		ShowTaskbar(false);
 		
 		// Debug
-		//printf("Width:%i[%i] Height:%i Top:%i | BorderPixelSize:%i\n", Width, NewWidth, Height, Top, BorderPixelSize);
+		#ifdef LOGGING
+			printf("Width:%i Height:%i | BorderPixelSize:%i\n", Width, Height, BorderPixelSize);
+		#endif
 	}
 	// ----------------------------------------------------------
 

@@ -30,6 +30,8 @@
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 typedef unsigned __int32 u32;
 
+// Logging
+//#define LOGGING
 // Detected window title
 #define WINDOW_TITLE "pSX v1.13"
 // Key for closing the console, when it's selected [Currently Disabled]
@@ -38,9 +40,11 @@ typedef unsigned __int32 u32;
 extern int FS_KEY;
 // Fullscreen mode enabled
 extern bool FSMode;
-// Active too big ratio
+// The current too big ratio
 extern float TOO_SMALL_RATIO;
-// Active too big ratio
+// An adjustment that was needed for some reason. Notice: This was okay for a 900 pixels high screen
+extern float Adj;
+// Console background color
 #define SCR_BACKGROUND BACKGROUND_BLUE;
 // Save the initial console window location
 extern int ConsoleLeft, ConsoleTop;
@@ -70,14 +74,14 @@ u32 Str2Hex(const char* _szValue);
 /* 
 	#0 (Default)
 */
-	#define TOO_SMALL_RATIO0 0;
+	#define TOO_SMALL_RATIO0 0
 /* 
 	#1
 		Final Fantasy 8 (NTSC): Top and bottom
 		Tekken 3 (PAL): Top and bottom
 		Vagrant Story (NTSC): Top and bottom
 */
-	#define TOO_SMALL_RATIO1 0.067
+	#define TOO_SMALL_RATIO1 0.066
 /*
 	#2
 		Chrono Cross (NTSC): Top and bottom
@@ -87,7 +91,7 @@ u32 Str2Hex(const char* _szValue);
 	#3
 		Final Fantasy 7 (PAL): Top and bottom
 */
-	#define TOO_SMALL_RATIO3 0.134
+	#define TOO_SMALL_RATIO3 0.125
 /*
 	#4
 		Metal Gear Solid (PAL): Right

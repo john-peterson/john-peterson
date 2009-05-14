@@ -63,6 +63,7 @@
 bool KeyPressed = false, ZoomKeyPressed = false;
 int FS_KEY = VK_ESCAPE;
 float TOO_SMALL_RATIO = 0;
+float Adj = 1.1;
 std::string WelcomeMessage[3];
 int ConsoleLeft, ConsoleTop;
 /////////////////////////////////////
@@ -219,7 +220,7 @@ void SettingsMessage(HWND hWnd, bool Vista, bool FiveFour)
 	WelcomeMessage[1] = StringFromFormat(
 	"                      SETTINGS:                  \n"
 	"   Borders: %s | Screen: %s | V. Resize: %0.3f\n",
-	Vista ? "Vista" : "XP   ", FiveFour ? "5:4" : "16:10", TOO_SMALL_RATIO);
+	Vista ? "Vista" : "XP   ", FiveFour ? "5:4" : "16:10", TOO_SMALL_RATIO / Adj);
 }
 //////////////////////////////////////////////
 
@@ -245,9 +246,9 @@ int main(int ArgC, char *ArgV[])
 			if (TmpStr == "v") Vista = true;
 			if (TmpStr == "f") FiveFour = true;
 			if (TmpStr == "k") KeepAR = true;
-			if (TmpStr == "1") {ZoomMode = 1; TOO_SMALL_RATIO = TOO_SMALL_RATIO1;}
-			if (TmpStr == "2") {ZoomMode = 2; TOO_SMALL_RATIO = TOO_SMALL_RATIO2;}
-			if (TmpStr == "3") {ZoomMode = 3; TOO_SMALL_RATIO = TOO_SMALL_RATIO3;}
+			if (TmpStr == "1") {ZoomMode = 1; TOO_SMALL_RATIO = TOO_SMALL_RATIO1 * Adj;}
+			if (TmpStr == "2") {ZoomMode = 2; TOO_SMALL_RATIO = TOO_SMALL_RATIO2 * Adj;}
+			if (TmpStr == "3") {ZoomMode = 3; TOO_SMALL_RATIO = TOO_SMALL_RATIO3 * Adj;}
 		}
 	}
 	if (ArgC > 2)
@@ -370,12 +371,13 @@ int main(int ArgC, char *ArgV[])
 		{
 			ZoomKeyPressed = true;
 			ZoomMode++;
-			if (ZoomMode > 2) ZoomMode = 0;
+			if (ZoomMode > 3) ZoomMode = 0;
 			switch(ZoomMode)
 			{
-				case 0: TOO_SMALL_RATIO = TOO_SMALL_RATIO0; break;
-				case 1: TOO_SMALL_RATIO = TOO_SMALL_RATIO1; break;
-				case 2: TOO_SMALL_RATIO = TOO_SMALL_RATIO2; break;
+				case 0: TOO_SMALL_RATIO = TOO_SMALL_RATIO0 * Adj; break;
+				case 1: TOO_SMALL_RATIO = TOO_SMALL_RATIO1 * Adj; break;
+				case 2: TOO_SMALL_RATIO = TOO_SMALL_RATIO2 * Adj; break;
+				case 3: TOO_SMALL_RATIO = TOO_SMALL_RATIO3 * Adj; break;
 			}
 			SettingsMessage(hWnd, Vista, FiveFour);
 			DoPrintMessage();
