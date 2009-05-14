@@ -320,6 +320,9 @@ int main(int ArgC, char *ArgV[])
 		{
 			Waiting4pSX = true;
 			Wait4pSX(hWnd);
+
+			// As a safety precaution in case pSX were to crash we show the taskbar here
+			ShowTaskbar(true);
 		}
 		else
 		{

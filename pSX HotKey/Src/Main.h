@@ -45,14 +45,19 @@ extern float TOO_SMALL_RATIO;
 // Save the initial console window location
 extern int ConsoleLeft, ConsoleTop;
 
+// Resize.cpp
+void ShowTaskbar(bool);
 void ResizeWindow(int, bool, bool, bool);
 std::string VKToString(int);
 
+// Console.cpp
 void RegularText(); void BrightText(); void BlueBackground(); void BlackBackground();
 void WhiteLine (); void PrintMessage(std::string Str[3], int);
 void Position(); void LetterSpace(); void PixelSpace(int, int, int, int);
 void ClearScreen();
 void DisableCursor();
+
+// Main.cpp
 void StopWait4pSX(HWND hWnd);
 HWND GetHwnd();
 u32 Str2Hex(const char* _szValue);

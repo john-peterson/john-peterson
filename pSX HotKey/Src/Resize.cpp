@@ -30,6 +30,20 @@ bool FSMode = false;
 
 
 //////////////////////////////////////////////////////////////////////////////////////
+// Show Taskbar
+// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+void ShowTaskbar(bool Show)
+{
+	HWND hWndTask = FindWindow("Shell_traywnd", "");
+	HWND hWndTaskButton = FindWindow("Button", "Start");
+
+	ShowWindow(hWndTask, Show);
+	if (hWndTaskButton) ShowWindow(hWndTaskButton, Show);
+}
+//////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////////////////////////
 // Resize Window
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
@@ -37,7 +51,6 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 	// Get HWND
 	HWND hWnd = FindWindow(NULL, WINDOW_TITLE);
 	HWND hWndTask = FindWindow("Shell_traywnd", "");
-	HWND hWndTaskButton = FindWindow("Button", "Start");
 
 	// Get current resolution
 	RECT Rc, WinRc, RcTask;
@@ -51,8 +64,7 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 	FSMode = false;
 	SetWindowLong(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
 	LetterSpace();
-	ShowWindow(hWndTask, 1);
-	if (hWndTaskButton) ShowWindow(hWndTaskButton, 1);
+	ShowTaskbar(true);
 
 	// ----------------------------------------------------------------------
 	// Select beetween three screen modes
@@ -141,8 +153,7 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 
 		SetWindowLong(hWnd, GWL_STYLE, WS_VISIBLE);
 		PixelSpace(ConsoleLeft - ConsoleBorderWidth, Top - ConsoleBorderWidth, ConsoleWidth, Height);
-		ShowWindow(hWndTask, 0);
-		if (hWndTaskButton) ShowWindow(hWndTaskButton, 0);
+		ShowTaskbar(false);
 		
 		// Debug
 		//printf("Width:%i[%i] Height:%i Top:%i | BorderPixelSize:%i\n", Width, NewWidth, Height, Top, BorderPixelSize);
