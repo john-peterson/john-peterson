@@ -65,6 +65,7 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 	SetWindowLong(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
 	LetterSpace();
 	ShowTaskbar(true);
+	ShowWindow(GetConsoleWindow(), SW_SHOW);
 
 	// ----------------------------------------------------------------------
 	// Select beetween three screen modes
@@ -79,6 +80,25 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 			Mode = 0;
 		else
 			Mode = 2;
+	}
+	// -----------------------------------
+
+	// ----------------------------------------------------------------------
+	// Hide the mouse cursor in fullscreen mode
+	// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+	if (Mode != 2)
+	{
+		// Use AttachThreadInput so that ShowCursor() works
+		AttachThreadInput(GetCurrentThreadId(), GetWindowThreadProcessId(hWnd,NULL), TRUE);
+		while (ShowCursor(true) < 0) {}
+		AttachThreadInput(GetWindowThreadProcessId(hWnd,NULL), GetCurrentThreadId(), FALSE);
+	}
+	else
+	{
+		// Use AttachThreadInput so that ShowCursor() works
+		AttachThreadInput(GetCurrentThreadId(), GetWindowThreadProcessId(hWnd,NULL), TRUE);
+		while (ShowCursor(false) >= 0) {}
+		AttachThreadInput(GetWindowThreadProcessId(hWnd,NULL), GetCurrentThreadId(), FALSE);
 	}
 	// -----------------------------------
 
@@ -106,17 +126,23 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 		// Full screen mode
 		FSMode = true;
 
+		// Make sure pSX is not minimized
+		while(IsIconic(hWnd))
+		{
+			ShowWindow(hWnd, SW_RESTORE);
+			Sleep(10);
+		}
+
 		// Produce width
-		int BorderWidth = 0;
-		Width = Rc.right + BorderWidth * 2;
-		Left = -BorderWidth;
+		Width = Rc.right;
+		Left = 0;
 
 		// Produce height
 		// First remove the menu bar
 		int MenuBarHeight;
 		if (Vista) MenuBarHeight = 20;
 			else MenuBarHeight = 19;  // XP
-		Height = Rc.bottom + MenuBarHeight + BorderWidth;
+		Height = Rc.bottom + MenuBarHeight;
 		Top = -MenuBarHeight;
 
 		// Then remove the black borders
@@ -126,9 +152,7 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 
 		// The console should still be fullscreen
 		int ConsoleLeft = Left, ConsoleWidth = Width;
-		int ConsoleBorderWidth = 0;
-		if (Vista) ConsoleBorderWidth = 8 + 2;
-			else ConsoleBorderWidth = 4 + 9;  // XP
+		int ConsoleBorderWidth = ConsoleBorderWidth = 13;  // Enough for both Vista and XP
 
 		// Keep 4:3 aspect ratio
 		int NewWidth;
@@ -146,26 +170,59 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 		if (FiveFour)
 		{
 			BorderPixelSize = Rc.bottom * (TOO_SMALL_RATIO / 2);
-			Height = Rc.bottom + MenuBarHeight + BorderWidth;
+			Height = Rc.bottom + MenuBarHeight;
 			Height = Height + BorderPixelSize;
 			Top = -MenuBarHeight;
 		}
 
+		// Remove pSX window borders
 		SetWindowLong(hWnd, GWL_STYLE, WS_VISIBLE);
-		PixelSpace(ConsoleLeft - ConsoleBorderWidth, Top - ConsoleBorderWidth, ConsoleWidth, Height);
+		// Hide the taskbar
 		ShowTaskbar(false);
+
+		// ----------------------------------------------------------------------
+		// Make sure the black window is behind pSX but above all other windows
+		// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+		if (KeepAR)
+		{
+			while(IsIconic(GetConsoleWindow()))
+			{
+				ShowWindow(GetConsoleWindow(), SW_RESTORE);
+				Sleep(10);
+				#ifdef LOGGING
+					printf("IsIconic()\n");
+				#endif
+			}
+			
+			// Cover the screen with the black window
+			PixelSpace(ConsoleLeft - ConsoleBorderWidth, Top - ConsoleBorderWidth, ConsoleWidth, Height);
+
+			// Use BringWindowToTop() instead of SetForegroundWindow() to avoid flashing the taskbar icon in Vista
+			while(GetForegroundWindow() != GetConsoleWindow())
+			{		
+				// Use AttachThreadInput so that BringWindowToTop() works
+				AttachThreadInput(GetWindowThreadProcessId(::GetForegroundWindow(),NULL), GetCurrentThreadId(), TRUE);
+				BringWindowToTop(GetConsoleWindow());
+				AttachThreadInput(GetWindowThreadProcessId(::GetForegroundWindow(),NULL), GetCurrentThreadId(), FALSE);
+
+				#ifdef LOGGING
+					printf("GetForegroundWindow(): %i %i %i\n", GetTopWindow(NULL), GetConsoleWindow(), hWnd);
+				#endif
+			}
+		}
+		// ----------------------------------------------------------
 		
 		// Debug
 		#ifdef LOGGING
 			printf("Width:%i Height:%i | BorderPixelSize:%i\n", Width, Height, BorderPixelSize);
+			printf("---------------------------------------------\n");
 		#endif
 	}
 	// ----------------------------------------------------------
 
-	// Set window size
+	// Set window size HWND_TOP
 	SetWindowPos(hWnd, HWND_TOP, Left,Top, Width,Height, SWP_NOSENDCHANGING | SWP_FRAMECHANGED);
-	// Show the window
-	//SetForegroundWindow(GetConsoleWindow());
+	// Show the window	
 	SetForegroundWindow(hWnd);
 }
 ////////////////////////////////////////////////

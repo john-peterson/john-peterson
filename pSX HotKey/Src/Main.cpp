@@ -158,23 +158,6 @@ bool ZoomKey(HWND hWnd)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// HWND to Thread
-// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
-unsigned long HWND2Thread(HWND hWnd) 
-{ 
-    HANDLE hProcess;
-    unsigned long ProcessId, pTID, ThreadID; 
-    ThreadID = GetWindowThreadProcessId(hWnd, &ProcessId);
-
-	// Logging
-	//printf ("Thread: %08x\n", ThreadID);
-
-    return ThreadID; 
-}
-//////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
 // Wait for pSX
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 void DoPrintMessage() 
@@ -215,12 +198,12 @@ void StopWait4pSX(HWND hWnd)
 	"           pSX Fullscreen Mode HotKey Enabled    \n");
 	DoPrintMessage();
 }
-void SettingsMessage(HWND hWnd, bool Vista, bool FiveFour) 
+void SettingsMessage(HWND hWnd, bool FiveFour, bool KeepAR) 
 { 
 	WelcomeMessage[1] = StringFromFormat(
 	"                      SETTINGS:                  \n"
-	"   Borders: %s | Screen: %s | V. Resize: %0.3f\n",
-	Vista ? "Vista" : "XP   ", FiveFour ? "5:4" : "16:10", TOO_SMALL_RATIO / Adj);
+	"   Keep 4:3: %s | Screen: %s | V. Resize: %0.3f\n",
+	KeepAR ? "On " : "Off", FiveFour ? "5:4" : "16:10", TOO_SMALL_RATIO / Adj);
 }
 //////////////////////////////////////////////
 
@@ -230,8 +213,18 @@ void SettingsMessage(HWND hWnd, bool Vista, bool FiveFour)
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 int main(int ArgC, char *ArgV[])
 {
-	bool Vista = false, FiveFour = false, KeepAR = false;
+	bool FiveFour = false, KeepAR = false, Vista = false;
 	int ZoomMode = 0;
+
+	// ----------------------------------------------------------
+	// Get OS version
+	// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+	OSVERSIONINFO osvi;
+	ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
+	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	GetVersionEx(&osvi);
+	if (osvi.dwMajorVersion == 6) Vista = true;
+	// --------------------------------
 
 	// ----------------------------------------------------------
 	// Get command line arguments
@@ -276,9 +269,10 @@ int main(int ArgC, char *ArgV[])
 
 	WelcomeMessage[0] = StringFromFormat(
 	"                        USAGE:                   \n"
-	"     Press <%s> To Enter and Exit Fullscreen Mode\n"
+	"     Press <%s> to Enter and Exit Fullscreen Mode\n"
+	"    Press <Z> (in this Window) to Toggle Zoom Mode\n"
 	"        Close this Window to Disable the HotKey  \n", KeyStr);
-	SettingsMessage(hWnd, Vista, FiveFour);
+	SettingsMessage(hWnd, FiveFour, KeepAR);
 	ClearScreen(); PrintMessage(WelcomeMessage, 2); WhiteLine();
 	// ---------------------------------------------
 
@@ -287,26 +281,6 @@ int main(int ArgC, char *ArgV[])
 	HWND hWndTarget = FindWindow(NULL, WINDOW_TITLE);
 	//printf ("hWndTarget: 0x%08x\n", hWndTarget);
 	//printf ("hProcess: 0x%08x\n", hProcess);
-
-	// ----------------------------------------------------------------------
-	// Load DLL to install hooks to hide the mouse cursor in full screen mode
-	// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
-	unsigned long ThreadID = HWND2Thread(hWndTarget);
-	HINSTANCE hInstDLL = LoadLibrary((LPCTSTR) "DLL.dll");
-	typedef BOOL (CALLBACK *InsHook)(unsigned long);
-	//typedef BOOL (CALLBACK *MouseProc)(bool); 
-	InsHook InsCBHook;
-	if (hInstDLL > 0)
-	{
-		InsCBHook = (InsHook)GetProcAddress(hInstDLL, "InstallHook");
-		//MouseProc pMouseProc = (MouseProc)GetProcAddress(hInstDLL, "HideMouse");
-		//printf("Installed\n");
-	}
-	else
-	{
-		//printf("Failed\n");
-	}
-	// -------------------------------------
 
 	// ----------------------------------------------------------------------
 	// Main loop
@@ -330,26 +304,29 @@ int main(int ArgC, char *ArgV[])
 			if (Waiting4pSX)
 			{
 				StopWait4pSX(hWnd);
-				// Install the DLL into pSX again
-				if (hInstDLL > 0)
-				{
-					ThreadID = HWND2Thread(hWndTarget);
-					InsCBHook(ThreadID);
-				}
 			}
 			Waiting4pSX = false;
 
 			// ----------------------------------------------------------------------
-			// When entering and ending fast forwarding the wind will jump away from the maximized mode
-			// This will kind of fix that by changing it back to full screen.
+			// When entering and ending fast forwarding the wind will jump away from the maximized mode.
+			// This will kind of fix that by changing it back to full screen. But it can also be fixed
+			// by disabling VSync for the windowed mode.
 			// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+			/*
 			RECT Rc, WinRc;
 			GetWindowRect(GetDesktopWindow(), &Rc);
 			GetWindowRect(hWndTarget, &WinRc);
-			if (FSMode && WinRc.bottom < Rc.bottom)
+			if (FSMode && WinRc.bottom < Rc.bottom && !IsIconic(hWnd))
 			{
 				ResizeWindow(2, Vista, FiveFour, KeepAR);
 			}
+			*/
+			// ----------------------------------------------
+
+			// ----------------------------------------------------------------------
+			// Keep the pSX window on top in fullscreen mode
+			// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+			if (FSMode && GetForegroundWindow() != hWndTarget) SetForegroundWindow(hWndTarget);
 			// ----------------------------------------------
 
 			// KeyPressed will disable repeated events
@@ -379,7 +356,7 @@ int main(int ArgC, char *ArgV[])
 				case 2: TOO_SMALL_RATIO = TOO_SMALL_RATIO2 * Adj; break;
 				case 3: TOO_SMALL_RATIO = TOO_SMALL_RATIO3 * Adj; break;
 			}
-			SettingsMessage(hWnd, Vista, FiveFour);
+			SettingsMessage(hWnd, FiveFour, KeepAR);
 			DoPrintMessage();
 		}
 		else if (!ZoomKey(hWnd) && ZoomKeyPressed)
@@ -392,18 +369,6 @@ int main(int ArgC, char *ArgV[])
 		//printf("Ht:%i, H:%i, KeyF:%i", hWndTarget, hWnd, GetAsyncKeyState(FS_KEY));
 	}
 	// -------------------------------------
-
-
-	// ----------------------------------------------------------------------
-	// Unload hooks
-	// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
-	if (hInstDLL > 0)
-	{
-		typedef BOOL (CALLBACK *UnsHook)(); 
-		UnsHook UnstCBHook = (UnsHook)GetProcAddress(hInstDLL, "UnHook"); 
-		UnstCBHook();
-	}
-	// -----------------------------
 
 	// End program
 	return 0;
