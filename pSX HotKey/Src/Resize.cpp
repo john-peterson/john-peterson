@@ -63,9 +63,7 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 	// Full screen mode
 	FSMode = false;
 	SetWindowLong(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
-	LetterSpace();
 	ShowTaskbar(true);
-	ShowWindow(GetConsoleWindow(), SW_SHOW);
 
 	// ----------------------------------------------------------------------
 	// Select beetween three screen modes
@@ -82,6 +80,9 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 			Mode = 2;
 	}
 	// -----------------------------------
+
+	// Restore the console window status
+	if (Mode != 2) LetterSpace();
 
 	// ----------------------------------------------------------------------
 	// Hide the mouse cursor in fullscreen mode
@@ -185,14 +186,20 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 		// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 		if (KeepAR)
 		{
+			// Save the current console window status
+			Iconic();
+
 			while(IsIconic(GetConsoleWindow()))
 			{
-				ShowWindow(GetConsoleWindow(), SW_RESTORE);
+				ShowWindowNoAnimate(GetConsoleWindow(), SW_RESTORE);
 				Sleep(10);
 				#ifdef LOGGING
 					printf("IsIconic()\n");
 				#endif
 			}
+
+			// Save the current console window status
+			Position();
 			
 			// Cover the screen with the black window
 			PixelSpace(ConsoleLeft - ConsoleBorderWidth, Top - ConsoleBorderWidth, ConsoleWidth, Height);
@@ -204,9 +211,9 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 				AttachThreadInput(GetWindowThreadProcessId(::GetForegroundWindow(),NULL), GetCurrentThreadId(), TRUE);
 				BringWindowToTop(GetConsoleWindow());
 				AttachThreadInput(GetWindowThreadProcessId(::GetForegroundWindow(),NULL), GetCurrentThreadId(), FALSE);
-
+				Sleep(10);
 				#ifdef LOGGING
-					printf("GetForegroundWindow(): %i %i %i\n", GetTopWindow(NULL), GetConsoleWindow(), hWnd);
+					printf("ResizeWindow(): %i %i %i\n", GetTopWindow(NULL), GetConsoleWindow(), hWnd);
 				#endif
 			}
 		}
@@ -214,8 +221,7 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 		
 		// Debug
 		#ifdef LOGGING
-			printf("Width:%i Height:%i | BorderPixelSize:%i\n", Width, Height, BorderPixelSize);
-			printf("---------------------------------------------\n");
+			printf("ResizeWindow(): Width:%i Height:%i | BorderPixelSize:%i\n", Width, Height, BorderPixelSize);
 		#endif
 	}
 	// ----------------------------------------------------------
@@ -224,6 +230,11 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 	SetWindowPos(hWnd, HWND_TOP, Left,Top, Width,Height, SWP_NOSENDCHANGING | SWP_FRAMECHANGED);
 	// Show the window	
 	SetForegroundWindow(hWnd);
+
+	// Debug
+	#ifdef LOGGING
+			printf("--------------------------------------------------\n");
+	#endif
 }
 ////////////////////////////////////////////////
 

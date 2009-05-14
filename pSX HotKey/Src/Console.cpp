@@ -74,15 +74,52 @@ void PrintMessage(std::string Str[3], int Rows)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Console letter space
+// Window status
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+void ShowWindowNoAnimate(HWND hWnd, int nCmdShow)
+{
+   // Save the minimize window anitation parameter
+   ANIMATIONINFO ai;
+   ai.cbSize = sizeof(ai);
+   SystemParametersInfo(SPI_GETANIMATION, sizeof(ai), &ai, 0);
+
+   int nMinAnimate = ai.iMinAnimate;
+
+   // No animation
+   ai.iMinAnimate = 0;
+   SystemParametersInfo(SPI_SETANIMATION, sizeof(ai), &ai, 0);
+
+   // ShowWindow()
+   ShowWindow(hWnd, nCmdShow);
+
+   // Restore animation
+   ai.iMinAnimate = nMinAnimate;
+   SystemParametersInfo(SPI_SETANIMATION, sizeof(ai), &ai, 0);
+}
+// Save console position and status
 void Position()
 {
 	RECT Rc;
 	GetWindowRect(GetConsoleWindow(), &Rc);
 	ConsoleLeft = Rc.left;
 	ConsoleTop = Rc.top;
+
+	// Logging
+	#ifdef LOGGING
+		printf("Position(): Left: %i Top:%i Iconic:%i\n", ConsoleLeft, ConsoleTop, ConsoleIconic);
+	#endif
 }
+void Iconic()
+{
+	if (IsIconic(GetConsoleWindow())) ConsoleIconic = 1;
+		else ConsoleIconic = 0;
+}
+/////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Console letter space
+// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 void LetterSpace()
 {
 	// Redraw the screen
@@ -96,7 +133,12 @@ void LetterSpace()
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); 
 
 	// Console size
-	int Width = 53;
+	#ifdef LOGGING
+		int Width = 93;
+	#else
+		int Width = 53;
+	#endif
+
 	int Height = 13;
 
 	// Get console info
@@ -114,9 +156,15 @@ void LetterSpace()
 	// Resize the window too
 	MoveWindow(GetConsoleWindow(), ConsoleLeft,ConsoleTop, (Width*8 + 50),(Height*12 + 50), true);
 
+	// Minimize if it was minimized
+	if (ConsoleIconic) ShowWindowNoAnimate(GetConsoleWindow(), SW_MINIMIZE);
+
 	// Logging
-	//printf("[SB:%i SW:%i] X:%i Y:%i W:%i | W:%i H:%i\n", SB, SW, ConInfo.dwSize.X, ConInfo.dwSize.Y,
-	//	(ConInfo.srWindow.Right - ConInfo.srWindow.Left), Width, Height);
+	#ifdef LOGGING
+		//printf("LetterSpace(): [SB:%i SW:%i] X:%i Y:%i W:%i | W:%i H:%i\n", SB, SW, ConInfo.dwSize.X, ConInfo.dwSize.Y,
+		//	(ConInfo.srWindow.Right - ConInfo.srWindow.Left), Width, Height);
+		printf("LetterSpace(): L:%i T:%i Iconic:%i\n", ConsoleLeft, ConsoleTop, ConsoleIconic);
+	#endif
 }
 void PixelSpace(int Left, int Top, int Width, int Height)
 {

@@ -64,7 +64,7 @@ int FS_KEY = VK_ESCAPE;
 float TOO_SMALL_RATIO = 0;
 float Adj = 1.1;
 std::string WelcomeMessage[3];
-int ConsoleLeft, ConsoleTop;
+int ConsoleLeft, ConsoleTop, ConsoleIconic = 0;
 /////////////////////////////////////
 
 

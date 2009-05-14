@@ -30,7 +30,7 @@
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 typedef unsigned __int32 u32;
 
-// Logging
+// Uncomment this to enable logging
 //#define LOGGING
 // Detected window title
 #define WINDOW_TITLE "pSX v1.13"
@@ -47,7 +47,7 @@ extern float Adj;
 // Console background color
 #define SCR_BACKGROUND BACKGROUND_BLUE;
 // Save the initial console window location
-extern int ConsoleLeft, ConsoleTop;
+extern int ConsoleLeft, ConsoleTop, ConsoleIconic;
 
 // Resize.cpp
 void ShowTaskbar(bool);
@@ -57,7 +57,8 @@ std::string VKToString(int);
 // Console.cpp
 void RegularText(); void BrightText(); void BlueBackground(); void BlackBackground();
 void WhiteLine (); void PrintMessage(std::string Str[3], int);
-void Position(); void LetterSpace(); void PixelSpace(int, int, int, int);
+void LetterSpace(); void PixelSpace(int, int, int, int);
+void Position(); void Iconic(); void ShowWindowNoAnimate(HWND, int);
 void ClearScreen();
 void DisableCursor();
 
