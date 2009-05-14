@@ -220,7 +220,7 @@ void ResizeWindow(int Mode, bool Vista, bool FiveFour, bool KeepAR)
 	}
 	// ----------------------------------------------------------
 
-	// Set window size HWND_TOP
+	// Set window size
 	SetWindowPos(hWnd, HWND_TOP, Left,Top, Width,Height, SWP_NOSENDCHANGING | SWP_FRAMECHANGED);
 	// Show the window	
 	SetForegroundWindow(hWnd);

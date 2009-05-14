@@ -32,7 +32,6 @@
 					a mouse event hook in pSX's thread.
 
 	Command lines:	Command lines can be written in two groups of letters, the letters are
-						v:		Vista size borders (stretch the window more because it assumes 8 px borders)
 						k:		Keep 4:3 aspect ratio in fullscreen mode
 						1:		Stretch the picture vertically by a factor of 0.067
 						2:		Stretch the picture vertically by a factor of 0.133
@@ -236,7 +235,6 @@ int main(int ArgC, char *ArgV[])
 		{
 			//printf("%i: %c\n", i, SArgV.substr(i, 1).c_str());
 			std::string TmpStr = SArgV.substr(i, 1);
-			if (TmpStr == "v") Vista = true;
 			if (TmpStr == "f") FiveFour = true;
 			if (TmpStr == "k") KeepAR = true;
 			if (TmpStr == "1") {ZoomMode = 1; TOO_SMALL_RATIO = TOO_SMALL_RATIO1 * Adj;}

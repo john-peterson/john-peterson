@@ -97,7 +97,7 @@ void LetterSpace()
 
 	// Console size
 	int Width = 53;
-	int Height = 12;
+	int Height = 13;
 
 	// Get console info
 	CONSOLE_SCREEN_BUFFER_INFO ConInfo;
@@ -147,7 +147,6 @@ void PixelSpace(int Left, int Top, int Width, int Height)
 
 	// Resize the window too
 	MoveWindow(GetConsoleWindow(), Left,Top, (Width*8 + 50),(Height*12 + 50), true);
-	//SetWindowPos(GetConsoleWindow(), HWND_TOP, Left,Top, (Width*8 + 50),(Height*12 + 50), NULL);
 
 	// Logging
 	//printf("[SB:%i SW:%i] X:%i Y:%i W:%i | W:%i H:%i\n", SB, SW, ConInfo.dwSize.X, ConInfo.dwSize.Y,
