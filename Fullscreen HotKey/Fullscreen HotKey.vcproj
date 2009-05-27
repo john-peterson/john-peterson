@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="pSX HotKey"
+	Name="Fullscreen HotKey"
 	ProjectGUID="{29B48ACE-EA42-4137-9EE2-53080A583ED1}"
 	RootNamespace="Run"
 	TargetFrameworkVersion="196613"
@@ -125,7 +125,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				GenerateDebugInformation="false"
+				GenerateDebugInformation="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="1"

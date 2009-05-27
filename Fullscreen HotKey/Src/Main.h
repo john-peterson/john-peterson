@@ -41,7 +41,7 @@ extern int FS_KEY;
 // Fullscreen mode enabled
 extern bool FSMode;
 // The current too big ratio
-extern float TOO_SMALL_RATIO;
+extern float TOO_SMALL_RATIO, X_OFFSET;
 // An adjustment that was needed for some reason. Notice: This was okay for a 900 pixels high screen
 extern float Adj;
 // Console background color
@@ -51,7 +51,7 @@ extern int ConsoleLeft, ConsoleTop, ConsoleIconic;
 
 // Resize.cpp
 void ShowTaskbar(bool);
-void ResizeWindow(int, bool, bool, bool);
+void ResizeWindow(HWND, int, bool, bool, bool);
 std::string VKToString(int);
 
 // Console.cpp

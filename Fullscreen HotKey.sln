@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pSX HotKey", "pSX HotKey\pSX HotKey.vcproj", "{29B48ACE-EA42-4137-9EE2-53080A583ED1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pSX HotKey", "Fullscreen HotKey\Fullscreen HotKey.vcproj", "{29B48ACE-EA42-4137-9EE2-53080A583ED1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

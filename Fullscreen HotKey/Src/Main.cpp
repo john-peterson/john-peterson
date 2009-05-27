@@ -59,11 +59,11 @@
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 #include "Main.h"
 
-bool KeyPressed = false, ZoomKeyPressed = false;
+bool KeyPressed = false, ZoomKeyPressed = false, XOffsetKeyPressed = false;
 int FS_KEY = VK_ESCAPE;
-float TOO_SMALL_RATIO = 0;
+float TOO_SMALL_RATIO = 0, X_OFFSET = 1;
 float Adj = 1.1;
-std::string WelcomeMessage[3];
+std::string WelcomeMessage[3], WindowTitle = WINDOW_TITLE;
 int ConsoleLeft, ConsoleTop, ConsoleIconic = 0;
 /////////////////////////////////////
 
@@ -153,6 +153,13 @@ bool ZoomKey(HWND hWnd)
 	// Z key
 	return (GetAsyncKeyState(0x5A) && GetForegroundWindow() == hWnd);
 }
+
+bool XOffsetKey(HWND hWnd)
+{
+	// X key
+	return (GetAsyncKeyState(0x58)); // && GetForegroundWindow() == hWnd);
+}
+
 //////////////////////////////////////////////
 
 
@@ -163,9 +170,26 @@ void DoPrintMessage()
 {
 	ClearScreen(); PrintMessage(WelcomeMessage, 3); WhiteLine();
 }
+std::string LineSpace(int _Length)
+{
+	// Determine string space
+	std::string Space = "";
+	int Length = _Length - ((int)WindowTitle.length() / 2);
+	if (Length > 0)
+	{
+		for (int i = 0; i < Length; ++i)
+		{
+			Space += " ";
+		}
+	}
+	return Space;
+}
 void Wait4pSX(HWND hWnd) 
 {
 	SetWindowText(hWnd, "HotKey Disabled ...");
+
+	// Determine string space
+	std::string Space = LineSpace(20);
 
 	static int c, iDot;
 	std::string Dot;
@@ -180,29 +204,33 @@ void Wait4pSX(HWND hWnd)
 
 		WelcomeMessage[2] = StringFromFormat(
 		"                       STATUS:                   \n"
-		"                   Waiting for pSX %s            \n", Dot.c_str());
+		"%sWaiting for '%s' %s\n", Space.c_str(), WindowTitle.c_str(), Dot.c_str());
 		DoPrintMessage();
 	}
-
-	// Run again
-	Sleep(1000 / 25);
 }
 void StopWait4pSX(HWND hWnd) 
 { 
 	// Update the title
 	SetWindowText(hWnd, "HotKey Enabled");
 
+	// Determine string space
+	std::string Space = LineSpace(10);
+
 	WelcomeMessage[2] = StringFromFormat(
 	"                       STATUS:                   \n"
-	"           pSX Fullscreen Mode HotKey Enabled    \n");
+	"%s'%s' Fullscreen Mode HotKey Enabled\n", Space.c_str(), WindowTitle.c_str());
 	DoPrintMessage();
 }
 void SettingsMessage(HWND hWnd, bool FiveFour, bool KeepAR) 
 { 
 	WelcomeMessage[1] = StringFromFormat(
 	"                      SETTINGS:                  \n"
-	"   Keep 4:3: %s | Screen: %s | V. Resize: %0.3f\n",
-	KeepAR ? "On " : "Off", FiveFour ? "5:4" : "16:10", TOO_SMALL_RATIO / Adj);
+	"     Keep 4:3: %s | V. Resize: %0.3f | X: %0.2f\n",
+	// pSX only
+	//"                    Screen: %s\n"
+	KeepAR ? "On " : "Off", TOO_SMALL_RATIO / Adj, X_OFFSET
+	//FiveFour ? "5:4" : "16:10"
+	);
 }
 //////////////////////////////////////////////
 
@@ -212,8 +240,8 @@ void SettingsMessage(HWND hWnd, bool FiveFour, bool KeepAR)
 // ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 int main(int ArgC, char *ArgV[])
 {
-	bool FiveFour = false, KeepAR = false, Vista = false;
-	int ZoomMode = 0;
+	bool FiveFour = false, KeepAR = false, Vista = false, FindOnce = false;
+	int ZoomMode = 0, XOffsetMode = 0;
 
 	// ----------------------------------------------------------
 	// Get OS version
@@ -231,32 +259,47 @@ int main(int ArgC, char *ArgV[])
 	if (ArgC > 1)
 	{
 		std::string SArgV = ArgV[1];
-		for (int i = 0; i < SArgV.length(); i++)
+		if (SArgV != "_")
 		{
-			//printf("%i: %c\n", i, SArgV.substr(i, 1).c_str());
-			std::string TmpStr = SArgV.substr(i, 1);
-			if (TmpStr == "f") FiveFour = true;
-			if (TmpStr == "k") KeepAR = true;
-			if (TmpStr == "1") {ZoomMode = 1; TOO_SMALL_RATIO = TOO_SMALL_RATIO1 * Adj;}
-			if (TmpStr == "2") {ZoomMode = 2; TOO_SMALL_RATIO = TOO_SMALL_RATIO2 * Adj;}
-			if (TmpStr == "3") {ZoomMode = 3; TOO_SMALL_RATIO = TOO_SMALL_RATIO3 * Adj;}
+			for (int i = 0; i < SArgV.length(); i++)
+			{
+				//printf("%i: %c\n", i, SArgV.substr(i, 1).c_str());
+				std::string TmpStr = SArgV.substr(i, 1);
+				if (TmpStr == "f") FiveFour = true;
+				if (TmpStr == "k") KeepAR = true;
+				if (TmpStr == "1") {ZoomMode = 1; TOO_SMALL_RATIO = TOO_SMALL_RATIO1 * Adj;}
+				if (TmpStr == "2") {ZoomMode = 2; TOO_SMALL_RATIO = TOO_SMALL_RATIO2 * Adj;}
+				if (TmpStr == "3") {ZoomMode = 3; TOO_SMALL_RATIO = TOO_SMALL_RATIO3 * Adj;}
+			}
 		}
 	}
 	if (ArgC > 2)
 	{
 		std::string SArgV = ArgV[2];
-		FS_KEY = Str2Hex(SArgV.substr(0, 2).c_str());
+		if (SArgV != "_") FS_KEY = Str2Hex(SArgV.substr(0, 2).c_str());
+	}
+	if (ArgC > 3)
+	{
+		WindowTitle = ArgV[3];
+		// Change _ to spaces
+		while (WindowTitle.find("_") != std::string::npos)
+		{
+			int it = WindowTitle.find("_");
+			WindowTitle.replace(it, 1, " ");
+		}
 	}
 	// -------------------------
 
 	// Setup window
-	WindowIcon();
-	Position();
-	LetterSpace();
-	DisableCursor();
+	//#ifndef LOGGING
+		WindowIcon();
+		Position();
+		LetterSpace();
+		DisableCursor();
+		BlueBackground();
+		ClearScreen();
+	//#endif
 	HWND hWnd = WindowName();
-	BlueBackground();
-	ClearScreen();
 
 	// ----------------------------------------------------------
 	// Print instruction
@@ -276,7 +319,7 @@ int main(int ArgC, char *ArgV[])
 
 	StopWait4pSX(hWnd);
 
-	HWND hWndTarget = FindWindow(NULL, WINDOW_TITLE);
+	HWND hWndTarget = FindWindow(NULL, WindowTitle.c_str());
 	//printf ("hWndTarget: 0x%08x\n", hWndTarget);
 	//printf ("hProcess: 0x%08x\n", hProcess);
 
@@ -288,21 +331,24 @@ int main(int ArgC, char *ArgV[])
 		// Default to true to install the DLL
 		static bool Waiting4pSX = true;
 
-		// If the pSX window goes away
-		if ((hWndTarget = FindWindow(NULL, WINDOW_TITLE)) == NULL)
+		// If the game window goes away
+		if (FindWindow(NULL, WindowTitle.c_str()) == NULL && !IsWindow(hWndTarget))
 		{
 			Waiting4pSX = true;
-			Wait4pSX(hWnd);
+			#ifndef LOGGING
+				Wait4pSX(hWnd);
+			#endif
 
 			// As a safety precaution in case pSX were to crash we show the taskbar here
 			ShowTaskbar(true);
 		}
 		else
 		{
-			if (Waiting4pSX)
-			{
-				StopWait4pSX(hWnd);
-			}
+			if (FindWindow(NULL, WindowTitle.c_str())) hWndTarget = FindWindow(NULL, WindowTitle.c_str());
+
+			if(Waiting4pSX)	StopWait4pSX(hWnd);
+
+			// Only update the message once
 			Waiting4pSX = false;
 
 			// ----------------------------------------------------------------------
@@ -322,7 +368,7 @@ int main(int ArgC, char *ArgV[])
 			// ----------------------------------------------
 
 			// ----------------------------------------------------------------------
-			// Keep the pSX window on top in fullscreen mode
+			// Keep the game window on top in fullscreen mode
 			// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 			if (FSMode && GetForegroundWindow() != hWndTarget) SetForegroundWindow(hWndTarget);
 			// ----------------------------------------------
@@ -331,17 +377,21 @@ int main(int ArgC, char *ArgV[])
 			if (GetAsyncKeyState(FS_KEY) && !KeyPressed)
 			{
 				KeyPressed = true;
-				if (ResizeKey(hWndTarget, hWnd)) ResizeWindow(-1, Vista, FiveFour, KeepAR);
+				if (ResizeKey(hWndTarget, hWnd)) ResizeWindow(hWndTarget, -1, Vista, FiveFour, KeepAR);
 			}
 			else if (!GetAsyncKeyState(FS_KEY) && KeyPressed)
 			{
 				KeyPressed = false;
 			}
 
-			Sleep(1000 / 25);
+			#ifdef LOGGING
+				//printf("Updated HWND\n");
+			#endif
 		}
 
+		// ----------------------------------------------------------------------
 		// Togle zoom mode
+		// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 		if (ZoomKey(hWnd) && !ZoomKeyPressed)
 		{
 			ZoomKeyPressed = true;
@@ -361,10 +411,46 @@ int main(int ArgC, char *ArgV[])
 		{
 			ZoomKeyPressed = false;
 		}
+		// ----------------------------------------------------------------------
+
+		// ----------------------------------------------------------------------
+		// Togle x-offset
+		// ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+		if (XOffsetKey(hWnd) && !XOffsetKeyPressed)
+		{
+			XOffsetKeyPressed = true;
+			XOffsetMode++;
+			if (XOffsetMode > 3) XOffsetMode = 0;
+			switch(XOffsetMode)
+			{
+				case 0: X_OFFSET = 1; break;
+				case 1: X_OFFSET = 1.03; break;
+				case 2: X_OFFSET = 1.035; break;
+				case 3: X_OFFSET = 1.04; break;
+			}
+			SettingsMessage(hWnd, FiveFour, KeepAR);
+			DoPrintMessage();
+			ResizeWindow(hWndTarget, 2, Vista, FiveFour, KeepAR);
+		}
+		else if (!XOffsetKey(hWnd) && XOffsetKeyPressed)
+		{
+			XOffsetKeyPressed = false;
+		}
+		// ----------------------------------------------------------------------
+
+
+		// Update rate
+		Sleep(1000 / 25);
 
 		// Logging
-		//ClearScreen();
-		//printf("Ht:%i, H:%i, KeyF:%i", hWndTarget, hWnd, GetAsyncKeyState(FS_KEY));
+		/*
+		#ifdef LOGGING
+			ClearScreen();
+			printf("Ht:%i, H:%i, FindWindow:%i IsWindow:%i Other:%i\n",
+				hWnd, hWndTarget, FindWindow(NULL, WINDOW_TITLE), IsWindow(hWndTarget),
+				FindWindow(NULL, "Sega Rally Championship"));
+		#endif
+		*/
 	}
 	// -------------------------------------
 
