@@ -1,5 +1,5 @@
 smarterr smartctl S.M.A.R.T. error log parser
-(C) John Peterson, licenced under GNU GPL 3
+(C) John Peterson, licensed under GNU GPL 3
 <?php
 $argv[1];
 $out = $argv[2];
