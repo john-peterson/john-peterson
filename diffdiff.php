@@ -1,7 +1,14 @@
+diffdiff diff comparison utility
+(C) John Peterson, licenced under GNU GPL 3
 <?php
 $f1 = $argv[1];
 $f2 = $argv[2];
+$usage = 'Usage: php diffdiff.php diff1 diff2';
 
+// Exceptions
+if (!isset($f1) || !isset($f2)) { echo $usage . PHP_EOL; return; }
+
+// Parse file list
 function files_list($lines) {
 	foreach ($lines as $line_num => $line) {
 		if (!strncmp($line, 'diff --git', 10)) {
@@ -11,6 +18,7 @@ function files_list($lines) {
 	}
 	return $filename;
 }
+// Strip unwanted rows
 function file_array($lines, $filenames) {
 	foreach ($lines as $line_num => $line) {
 		if (!strncmp($line, 'diff --git', 10)) {
@@ -27,11 +35,11 @@ function file_array($lines, $filenames) {
 	return $line_out;
 }
 
+// Write file
 function write_array($file, $filename) {
 	$f = fopen($filename, 'w');
-	foreach ($file as $line_num => $line) {
+	foreach ($file as $line_num => $line)
 		fwrite($f, $line);
-	}
 	fclose($f);
 }
 
