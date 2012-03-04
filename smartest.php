@@ -1,5 +1,5 @@
 smartest smartctl S.M.A.R.T. error ddrescue marked sectors test
-(C) John Peterson, licensed under GNU GPL 3
+(C) John Peterson, GNU GPL 3
 <?php
 $argv[1];
 $argv[2];

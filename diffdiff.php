@@ -1,5 +1,5 @@
 diffdiff diff comparison utility
-(C) John Peterson, licensed under GNU GPL 3
+(C) John Peterson, GNU GPL 3
 <?php
 $f1 = $argv[1];
 $f2 = $argv[2];

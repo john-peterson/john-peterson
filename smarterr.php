@@ -1,12 +1,12 @@
 smarterr smartctl S.M.A.R.T. error log parser
-(C) John Peterson, licensed under GNU GPL 3
+(C) John Peterson, GNU GPL 3
 <?php
 $argv[1];
 $out = $argv[2];
 $usage = 'Usage: php smarterr.php [command | infile] outfile';
 
 // Exceptions
-if (!isset($argv[2])) { echo $usage . PHP_EOL; return; }
+if (!isset($argv[2])) { echo $usage.PHP_EOL; return; }
 if (!strncmp($argv[1], 'smartctl', 8)) {
 	if (!preg_match('/^smartctl.*(xall|error|xerror).*/', $argv[1])) {
 		echo 'Unsupported command: ' . $argv[1] . PHP_EOL; return;
