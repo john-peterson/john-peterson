@@ -38,7 +38,7 @@ function pathinfo_dirname($path) {
  * Return dir excluding drive.
  */
 function pathinfo_dirnext($path, $needle = '\\') {
-	return substr($path, strpos($path, $needle)+1);
+	return substr($path, strpos($path, $needle)+strlen($needle));
 }
 
 /**
@@ -145,7 +145,7 @@ function parse_wpl($lines, $from, $to) {
 			if (!strncmp($path_from, '..\\', 3) || (!strncmp($path_from, '\\', 1) && strncmp($path_from, '\\\\', 2))) {
 				$lfrom[] = append_slash(pathinfo_dirname($from)).$path_from;
 				$lto[] = append_slash(pathinfo_dirname($to)).pathinfo_dirnext($path_from);
-			// absolute path
+			// absolute path: assume source paths is called 'Music' and use source path after '...Music\' as target path
 			} else {
 				$lfrom[] = $path_from;
 				$lto[] = append_slash(pathinfo_dirname($to)).pathinfo_dirnext($path_from, 'Music\\');
@@ -160,5 +160,6 @@ list($lfrom, $lto) = list_wpl($from, $to);
 // copy files
 copy_list($lfrom, $lto);
 // remove extra files
+echo PHP_EOL."Removing extra files in target directory...\t".PHP_EOL;
 unlink_extra($lto, $to);
 ?>

@@ -41,6 +41,10 @@ namespace sfcex {
 
 		// extract wim file
 		static void extractFile(String src, String relPath) {
+			if (!File.Exists("7z.exe")) {
+				Console.WriteLine("\n\"7z.exe\" missing");
+				Environment.Exit(0);
+			}
 			Process p = new Process();
 			p.StartInfo.FileName = "7z";
 			p.StartInfo.Arguments = String.Format("e -aoa {0}:\\sources\\install.wim {1}{2}", dSrc.ToUpper(), ed, relPath);
