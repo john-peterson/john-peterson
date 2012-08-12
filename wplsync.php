@@ -1,9 +1,10 @@
-wplsync WPL (Windows Media Player Playlist) sync
-(C) John Peterson, GNU GPL 3
+#!/usr/bin/php
+wplsync WPL (Windows Media Player Playlist) sync.
+(C) John Peterson. License GNU GPL 3.
 <?php
 $from = $argv[1];
 $to = $argv[2];
-$usage = 'Usage: php smarterr.php inpath outpath';
+$usage = 'Usage: smarterr.php inpath outpath';
 
 // Exceptions
 if (!isset($argv[2])) { echo $usage.PHP_EOL; return; }
@@ -51,6 +52,16 @@ function mkdir_recursive($pathname, $mode = 0777) {
 	// echo "Create\t".$pathname.PHP_EOL;
     is_dir(dirname($pathname)) || mkdir_recursive(dirname($pathname), $mode);
     return is_dir($pathname) || @mkdir($pathname, $mode);
+}
+
+/**
+ * Is music file name.
+ */
+function is_music_file($s) {
+	$e = pathinfo($s, PATHINFO_EXTENSION);
+	$x = array("ogg","mp3","wma");
+	if (array_search($e, $x) !== false) return true;
+	return false;
 }
 
 /**
@@ -141,6 +152,7 @@ function parse_wpl($lines, $from, $to) {
 		if (strpos($line, '<media')) {
 			$elem = explode('"',$line);
 			$path_from = xml_entity_decode(utf8_decode($elem[1]));
+			if (!is_music_file($path_from)) continue;
 			// relative path
 			if (!strncmp($path_from, '..\\', 3) || (!strncmp($path_from, '\\', 1) && strncmp($path_from, '\\\\', 2))) {
 				$lfrom[] = append_slash(pathinfo_dirname($from)).$path_from;

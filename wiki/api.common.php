@@ -1,6 +1,7 @@
 <?php
 // mediawiki API interface
 // (C) John Peterson, GNU GPL 3
+include_once('../common/common.php');
 class mw_cm {
 static function curl_request($url, &$cookie='', $referer='', $post=array()) {
 	$is_post = !empty($post);
@@ -24,7 +25,7 @@ static function curl_request($url, &$cookie='', $referer='', $post=array()) {
 	// echo $content.PHP_EOL.PHP_EOL;
 	self::update_cookies($header, $cookie);
 	curl_close($ch);
-	self::flushi();
+	flushi();
 	if ($code == 200) return $content; else return array(get_httpcode($header));
 }
 
@@ -33,18 +34,6 @@ static function parse_return($s) {
 	$header = isset($s[0]) ? $s[0] : '';
 	$content = isset($s[1]) ? trim($s[1]) : '';
 	return array($header, $content);
-}
-
-static function flushi() {
-	flush();
-	ob_flush();
-}
-
-static function xml2arr($xml) {
-	$p = xml_parser_create();
-	xml_parse_into_struct($p, $xml, $xml);
-	xml_parser_free($p);
-	return $xml;
 }
 
 static function get_cookies($c) {

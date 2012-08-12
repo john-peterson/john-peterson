@@ -1,9 +1,11 @@
-diffdiff diff comparison utility
-(C) John Peterson, GNU GPL 3
+#!/usr/bin/env php
 <?php
+// diffdiff diff comparison utility.
+// © John Peterson, GNU GPL 3
+
 $f1 = $argv[1];
 $f2 = $argv[2];
-$usage = 'Usage: php diffdiff.php diff1 diff2';
+$usage = 'Usage: diffdiff.php diff1 diff2';
 
 // Exceptions
 if (!isset($f1) || !isset($f2)) { echo $usage . PHP_EOL; return; }

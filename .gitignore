@@ -1,0 +1,35 @@
+# Visual Studio
+*.obj
+*.exe
+*.pdb
+*.user
+*.opensdf
+*.sdf
+*.aps
+*.pch
+*.ipch
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+*.lib
+*.sbr
+[Dd]ebug*/
+[Rr]elease*/
+# Other
+Thumbs.db
+*.csv
+*.dat
+*.diff
+*.patch
+*.html
+*.ini
+*.txt
+*.zip

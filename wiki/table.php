@@ -1,3 +1,4 @@
+#!php
 <?php
 // wiki table editor
 // (C) John Peterson, GNU GPL 3

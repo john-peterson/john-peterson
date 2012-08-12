@@ -1,9 +1,11 @@
-smartest smartctl S.M.A.R.T. error ddrescue marked sectors test
-(C) John Peterson, GNU GPL 3
+#!/usr/bin/env php
 <?php
+// smartest smartctl S.M.A.R.T. error ddrescue marked sectors test
+// © John Peterson. License GNU GPL 3.
+
 $argv[1];
 $argv[2];
-$usage = 'Usage: php smartest.php command logfile';
+$usage = 'Usage: smartest.php command logfile';
 
 // Exceptions
 if (!isset($argv[2])) { echo PHP_EOL.$usage. HP_EOL; return; }
