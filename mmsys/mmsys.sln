@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 11
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mmsys", "mmsys\mmsys.vcxproj", "{3B0ED23C-304B-4B8E-BC9E-95B9A2CBEE1B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FE0EB650-A7DD-44F2-A8A7-AFE3BE1D151B} = {FE0EB650-A7DD-44F2-A8A7-AFE3BE1D151B}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mmsysEx", "mmsysEx\mmsysEx.vcxproj", "{FE0EB650-A7DD-44F2-A8A7-AFE3BE1D151B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "..\Common\Common.vcxproj", "{E6ACE6B7-E8BF-4979-B32F-9CA56C7BD8A8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3B0ED23C-304B-4B8E-BC9E-95B9A2CBEE1B}.Debug|x64.ActiveCfg = Debug|x64
+		{3B0ED23C-304B-4B8E-BC9E-95B9A2CBEE1B}.Debug|x64.Build.0 = Debug|x64
+		{3B0ED23C-304B-4B8E-BC9E-95B9A2CBEE1B}.Release|x64.ActiveCfg = Release|x64
+		{3B0ED23C-304B-4B8E-BC9E-95B9A2CBEE1B}.Release|x64.Build.0 = Release|x64
+		{E6ACE6B7-E8BF-4979-B32F-9CA56C7BD8A8}.Debug|x64.ActiveCfg = Debug|x64
+		{E6ACE6B7-E8BF-4979-B32F-9CA56C7BD8A8}.Debug|x64.Build.0 = Debug|x64
+		{E6ACE6B7-E8BF-4979-B32F-9CA56C7BD8A8}.Release|x64.ActiveCfg = Release|x64
+		{E6ACE6B7-E8BF-4979-B32F-9CA56C7BD8A8}.Release|x64.Build.0 = Release|x64
+		{FE0EB650-A7DD-44F2-A8A7-AFE3BE1D151B}.Debug|x64.ActiveCfg = Debug|x64
+		{FE0EB650-A7DD-44F2-A8A7-AFE3BE1D151B}.Debug|x64.Build.0 = Debug|x64
+		{FE0EB650-A7DD-44F2-A8A7-AFE3BE1D151B}.Release|x64.ActiveCfg = Release|x64
+		{FE0EB650-A7DD-44F2-A8A7-AFE3BE1D151B}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
