@@ -10,13 +10,9 @@ struct EnumStruct {
 	HWND hBox;
 };
 
-void ChangeStyle(HWND hWnd) {
-	SetWindowLong(hWnd, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
-}
-
 void ShowStyle(HWND hWnd) {
-	OutputDebugStringEx(L"§GWL_STYLE: %s", WSTranslate(GetWindowLong(hWnd, GWL_STYLE)).c_str());
-	OutputDebugStringEx(L"§GWL_EXSTYLE: %s", WSEXTranslate(GetWindowLong(hWnd, GWL_EXSTYLE)).c_str());
+	OutputDebugStringEx(L"GWL_STYLE: %s", WSTranslate(GetWindowLong(hWnd, GWL_STYLE)).c_str());
+	OutputDebugStringEx(L"GWL_EXSTYLE: %s", WSEXTranslate(GetWindowLong(hWnd, GWL_EXSTYLE)).c_str());
 }
 
 BOOL CALLBACK EnumChildProc(HWND hWnd, LPARAM lParam) {
@@ -96,14 +92,7 @@ def:
 	return DefDlgProc(hWnd, message, wParam, lParam);
 }
 
-// override wndproc
-void OverrideWndProc(HWND hWnd) {
-	if (!IsWindow(hWnd)) return;
-	if (!(pWndProc = (WNDPROC)GetWindowLongPtr(hWnd, GWLP_WNDPROC)))
-		OutputDebugStringEx(L"§pOldWndProc: %s", GetLastErrorEx().c_str());
-	if (!SetWindowLongPtr(hWnd, GWLP_WNDPROC, LONG_PTR(WindowProc)))
-		OutputDebugStringEx(L"§SetWindowLongPtr: %s", GetLastErrorEx().c_str());
-}
+
 
 DWORD WINAPI ThreadFunction(LPVOID lpParam) {
 	HWND hWnd = 0;
@@ -111,8 +100,8 @@ DWORD WINAPI ThreadFunction(LPVOID lpParam) {
 		hWnd = FindWindowByTitle(L"Sound");
 		Sleep(1000/25);
 	}
-	ChangeStyle(hWnd);
-	OverrideWndProc(hWnd);
+	ChangeStyle(hWnd, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
+	OverrideWndProc(pWndProc, WindowProc, hWnd);
 	return 0;
 }
 
@@ -123,14 +112,14 @@ void RunThread() {
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
-		OutputDebugStringEx(L"§DLL_PROCESS_ATTACH\n");
+		OutputDebugStringEx(L"DLL_PROCESS_ATTACH\n");
 		RunThread();
 		break;
 	case DLL_PROCESS_DETACH:
-		OutputDebugStringEx(L"§DLL_PROCESS_DETACH\n");
+		OutputDebugStringEx(L"DLL_PROCESS_DETACH\n");
 		break;
 	case DLL_THREAD_DETACH:
-		OutputDebugStringEx(L"§DLL_THREAD_DETACH\n");
+		OutputDebugStringEx(L"DLL_THREAD_DETACH\n");
 		break;
 	}
 	return TRUE;
