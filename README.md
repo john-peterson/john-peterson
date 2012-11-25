@@ -54,6 +54,10 @@
 
 ## Windows tools
 
+**envupdate** Update environment for all processes with a message loop (send `WM_SETTINGCHANGE`).
+
+	envupdate
+
 **SndVol** Makes `SndVol.exe` (Windows Volume Mixer) resizable by changing its `GWL_STYLE` and overriding its `WindowProc`.
 
 	SndVol --wait	# keep loader window open to allow pinning to taskbar
