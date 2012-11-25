@@ -1,8 +1,10 @@
 <?php
 // Shared code.
-// (C) John Peterson. License GNU GPL 3.
+// © John Peterson. License GNU GPL 3.
+
 define('SEP', ';');
-// xpath
+
+// xml
 function xpath_request($s, $q, $html = false) {
 	libxml_use_internal_errors(true);
 	$doc = new DOMDocument;
@@ -38,14 +40,24 @@ function xpath_multi($s, $q) {
 	$result = xpath_request($s, $q);
 	return xpath2array($result);
 }
-function xml2arr($xml) {
-	$p = xml_parser_create();
-	xml_parse_into_struct($p, $xml, $xml);
-	xml_parser_free($p);
-	return $xml;
+function xml2array_($xml) {
+	foreach ($xml->children() as $n) {
+		$n_a = (array)$n;
+		$i = array();
+		$i['name'] = $n->getName();
+		$i['value'] = trim(strval($n));
+		$i['attributes'] = $n_a['@attributes'];
+		if(count($n->children()) > 0) {
+			$i['children'] = xml2array_($n);
+		}
+		$a[] = $i;
+	}
+	return $a;
 }
-function xml2array($s) {
-	return json_decode(json_encode((array)simplexml_load_string($s)), true);
+function xml2array($xml) {
+	$a['name'] = $xml->getName();
+	$a['children'] = xml2array_($xml);
+	return $a;
 }
 
 // network
@@ -65,7 +77,7 @@ function ping($host, $timeout = 1) {
 		$result = round(((microtime(true)-$ts)*1000), 0);
 	else
 		$result = "";
-					exit(0);
+
 	socket_close($socket);
 	return $result;
 }
@@ -158,6 +170,19 @@ function ini_read($f) {
 		}
 	}
 	return $out;
+}
+
+// walk
+
+// functions that accept walk
+function trim_ex(&$v, $k) {
+	$v = trim($v);
+}
+
+// walk wrappers
+function trim_w($v) {
+	if (is_array($v)) array_walk_recursive($v, 'trim_ex');
+	return $v;
 }
 
 // other
