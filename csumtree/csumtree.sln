@@ -1,7 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 11
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "csumtree", "csumtree.csproj", "{5EB3FC40-6B89-4330-949F-8F0D283AE763}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\common\Common.csproj", "{CFDA18E0-01A9-45C6-B464-F722F9D14344}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,6 +15,10 @@ Global
 		{5EB3FC40-6B89-4330-949F-8F0D283AE763}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5EB3FC40-6B89-4330-949F-8F0D283AE763}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5EB3FC40-6B89-4330-949F-8F0D283AE763}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFDA18E0-01A9-45C6-B464-F722F9D14344}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFDA18E0-01A9-45C6-B464-F722F9D14344}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFDA18E0-01A9-45C6-B464-F722F9D14344}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFDA18E0-01A9-45C6-B464-F722F9D14344}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
