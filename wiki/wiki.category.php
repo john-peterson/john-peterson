@@ -1,9 +1,12 @@
 #!php
 <?php
 // Category reader.
-// (C) John Peterson. License GNU GPL 3.
+// © John Peterson. License GNU GPL 3.
 include('../common/common.php');
 $usage = "Usage: ${argv[0]} category [server].";
+
+// settings
+$debug = true;
 
 // exceptions
 if (!isset($argv[1])) { echo $usage.PHP_EOL; return; } else $c = $argv[1];
@@ -61,11 +64,11 @@ function strip_wiki($s) {
 }
 
 function get_category($c, $ct = "") {
-	global $STDERR, $f, $s, $i, $A, $n;
+	global $debug, $STDERR, $f, $s, $i, $A, $n;
 	if (!empty($ct)) $ct .= " → "; $ct .= $c;	
 	$skip_word = array('portal','list','lists');
 	$skip_string = array('portal:','template:','talk:');	
-	fwrite($STDERR, sprintf("\r\033[K%d Reading category:%s ...", $n, $c));
+	fwrite($STDERR, sprintf("%s%d Reading category:%s …%s", $debug ? '': "\r\033[K", $n, $c, $debug ? "\n": ''));
 	$url = "http://$s/w/api.php?action=query&list=categorymembers&cmlimit=max&format=xml&cmtitle=category:".urlencode($c);
 	$xml = file_get_contents_header($url);
 	if (count(xpath($xml, "//categorymembers/cm/@title")) == 0) {
@@ -74,6 +77,7 @@ function get_category($c, $ct = "") {
 	}
 	$a = xpath($xml, "//categorymembers/cm/@title");
 	// print_r($a);
+	if (!is_array($a)) $a = array($a);
 	foreach ($a as $b) {
 		if (array_search_word($b, $skip_word) || array_search_string($b, $skip_string)) continue;
 		if (stripos($b, 'category:') !== false) {
@@ -87,7 +91,7 @@ function get_category($c, $ct = "") {
 				$A[] = $b;
 			}
 			$n++;
-			fwrite($STDERR, sprintf("\r\033[K%d %s → %s ...", $n, $ct, $b));
+			fwrite($STDERR, sprintf("\r\033[K%d %s → %s …", $n, $ct, $b));
 			$t = file_get_contents_header("http://$s/w/index.php?action=raw&title=".urlencode($b));
 			file_put_contents("$f.raw.log", "¶$n $ct → $b\n".$t."\n", FILE_APPEND);
 			echo strip_wiki($t);

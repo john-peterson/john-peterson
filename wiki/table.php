@@ -1,7 +1,7 @@
 #!php
 <?php
 // wiki table editor
-// (C) John Peterson, GNU GPL 3
+// © John Peterson. License GNU GPL 3.
 function roundn($val, $dec) {
 	return ltrim(round($val, $dec), '0');
 }

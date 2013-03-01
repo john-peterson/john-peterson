@@ -1,7 +1,6 @@
 <?php
 // mediawiki API interface
-// (C) John Peterson, GNU GPL 3
-include_once('api.common.php');
+// © John Peterson. License GNU GPL 3.
 include_once('api.edit.php');
 include_once('api.info.php');
 class mw {
