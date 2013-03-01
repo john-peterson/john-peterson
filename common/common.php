@@ -21,9 +21,8 @@ function xpath_request($s, $q, $html = false) {
 function xpath($s, $q, $html = false) {
 	$result = xpath_request($s, $q, $html);
 	if (!is_object($result)) return $result;
-	foreach($result as $node) {
+	foreach($result as $node)
 		$x[] = $node->nodeValue;
-	}
 	if (count($x) == 1) return $x[0]; else return $x;
 }
 function xpath2array($n) {
@@ -31,13 +30,13 @@ function xpath2array($n) {
 		$d = new DOMDocument;
 		$i = $d->importNode($o,true);
 		$d->appendChild($i);
-		$a = xml2array($d->saveXML())['@attributes'];
+		$a = xml2array($d->saveXML())['attributes'];
 		$r[$a['name']] = $a['value'];
 	}
 	return $r;
 }
-function xpath_multi($s, $q) {
-	$result = xpath_request($s, $q);
+function xpath_multi($s, $q, $html = false) {
+	$result = xpath_request($s, $q, $html);
 	return xpath2array($result);
 }
 function xml2array_($xml) {
@@ -55,8 +54,12 @@ function xml2array_($xml) {
 	return $a;
 }
 function xml2array($xml) {
+	if (!is_object($xml))
+		$xml = new SimpleXMLElement($xml);
 	$a['name'] = $xml->getName();
-	$a['children'] = xml2array_($xml);
+	$xml_a = (array)$xml; $a['attributes'] = $xml_a['@attributes'];
+	if (is_object($xml->children()))
+		$a['children'] = xml2array_($xml);
 	return $a;
 }
 
