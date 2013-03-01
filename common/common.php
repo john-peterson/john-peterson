@@ -64,6 +64,48 @@ function xml2array($xml) {
 }
 
 // network
+function curl_request($url, &$cookie='', $referer='', $post=array()) {
+	$is_post = !empty($post);
+	$useragent = "PHP";	
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $url);
+	if (!empty($cookie)) curl_setopt($ch, CURLOPT_COOKIE, self::get_cookies($cookie));
+	if (!empty($referer)) curl_setopt($ch, CURLOPT_REFERER, $referer);	
+	curl_setopt($ch, CURLOPT_USERAGENT, $useragent);
+	if ($is_post) curl_setopt($ch, CURLOPT_POST, true);
+	if ($is_post) curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post));
+	curl_setopt($ch, CURLOPT_HEADER, true);
+	curl_setopt($ch, CURLINFO_HEADER_OUT, true);	
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	$result = curl_exec($ch);
+	$code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	$h_out = curl_getinfo($ch, CURLINFO_HEADER_OUT);
+	list($header, $content) = self::parse_return($result);
+	// echo PHP_EOL.$h_out.$header.PHP_EOL.http_build_query($post).PHP_EOL;
+	// echo $content.PHP_EOL.PHP_EOL;
+	self::update_cookies($header, $cookie);
+	curl_close($ch);
+	flushi();
+	if ($code == 200) return $content; else return array(get_httpcode($header));
+}
+function get_cookies($c) {
+	if (empty($c)) return;
+	foreach ($c as $k=>$d) {
+		$e .= $k.'='.$d.'; ';
+	}
+	return substr($e, 0, -2);
+}
+function update_cookies($h, &$cookie) {
+	$c = self::get_setcookie($h);
+	if (empty($c)) return;
+	if (count($c) < 2) $c = array($c);
+	foreach ($c as $d) {
+		$k = explode('=', $d, 2);
+		$v = explode(';', $k[1], 2);		
+		$cookie[$k[0]] = $v[0];
+	}
+}
 function ping($host, $timeout = 1) {
 	global $argv;
 	$package = "\x08\x00\x7d\x4b\x00\x00\x00\x00PingHost";
