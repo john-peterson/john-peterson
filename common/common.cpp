@@ -1,19 +1,23 @@
 // Shared code.
-// (C) John Peterson, GNU GPL 3
+// © John Peterson. License GNU GPL 3.
+
 #include "common.h"
 u8 verb = 1;
+
 // log
 void log(const char* f, ...) {
 	va_list l;
 	va_start(l, f);
 	vfprintf(stderr, f, l);
 	va_end(l);
+	fflush(stderr);
 }
 void log(const char *f, va_list &l_) {
 	const int len = 0xfff;
-	char buf[len];	
+	char buf[len];
 	va_list *l = &l_;
 	vfprintf(stderr, f, *l);
+	fflush(stderr);
 }
 void log1(const char* f, ...) {
 	if (verb < 1) return;
@@ -37,7 +41,9 @@ void logc(int a, int c, char* f, ...) {
 	vsnprintf(buf, len, f, l);
 	va_end(l);
 	fprintf(stderr, "\033[%d;%dm%s\033[0m", a, c, buf);
+	fflush(stderr);
 }
+#ifndef _WIN32
 void logt(const char* f, ...) {
 	const int len = 0xfff;
 	char buf[len];
@@ -46,7 +52,13 @@ void logt(const char* f, ...) {
 	vsnprintf(buf, len, f, l);
 	va_end(l);
 	fprintf(stderr, "\033[1;30m%s\033[0m %s", time_hm().c_str(), buf);
+	fflush(stderr);
 }
+#endif
+
+// string
+
+#ifndef _WIN32
 string format(const char* format, ...) {
 	const u32 len = 0x2000;
 	char buffer[len];
@@ -56,7 +68,18 @@ string format(const char* format, ...) {
 	va_end(argptr);
 	return string(buffer);
 }
-string arr2str(const u8 *buf, int len, int o) {	
+#else
+wstring format(const wchar_t* format, ...) {
+	const u32 len = 0x2000;
+	wchar_t buffer[len];
+	va_list argptr;
+	va_start(argptr, format);
+	_vsnwprintf(buffer, len, format, argptr);
+	va_end(argptr);
+	return wstring(buffer);
+}
+#endif
+string arr2str(const u8 *buf, int len, int o) {
 	string tmp;
 	char tmp_c[16];
 	for (int i = 0; i < len; i++) {
@@ -80,9 +103,53 @@ bool is_number(const std::string& s) {
     while (it != s.end() && std::isdigit(*it)) ++it;
     return !s.empty() && it == s.end();
 }
+
+// string
+
+// string to hex
+u32 str2hex(const wchar_t* _szValue) {
+	u32 value = 0;
+	size_t finish = wcslen(_szValue);
+
+	if (finish > 8)
+		finish = 8;  // Max 32-bit values are supported.
+
+	for (size_t count = 0; count < finish; count++) {
+		value <<= 4;
+		switch (_szValue[count]) {
+		    case '0': break;
+		    case '1': value += 1; break;
+		    case '2': value += 2; break;
+		    case '3': value += 3; break;
+		    case '4': value += 4; break;
+		    case '5': value += 5; break;
+		    case '6': value += 6; break;
+		    case '7': value += 7; break;
+		    case '8': value += 8; break;
+		    case '9': value += 9; break;
+		    case 'A':
+		    case 'a': value += 10; break;
+		    case 'B':
+		    case 'b': value += 11; break;
+		    case 'C':
+		    case 'c': value += 12; break;
+		    case 'D':
+		    case 'd': value += 13; break;
+		    case 'E':
+		    case 'e': value += 14; break;
+		    case 'F':
+		    case 'f': value += 15; break;
+		    default:
+			    return false;
+			    break;
+		}
+	}
+	return value;
+}
+
 // file
-string read_line(s32 line_i) {
-	istringstream line(read_file(home_dir() + "/.readb", line_i));
+string read_line(s32 line_i, string fn) {
+	istringstream line(read_file(fn, line_i));
 	return line.str();
 }
 string read_file(string fn, s32 line_i) {
@@ -103,8 +170,8 @@ string read_file(string fn, s32 line_i) {
 	else log2("Unable to open %s\n", fn.c_str());
 	return ss.str();
 }
-void write_file(u32 s, bool append) {
-	string fn = home_dir() + "/.readb";
+#ifndef _WIN32
+void write_file(u32 s, string fn, bool append) {
 	ofstream f(fn.c_str(), ios::out | (append ? ios::app : _Ios_Openmode(0)));
 	if (f.is_open()) {
 		if (append) f << endl;
@@ -113,7 +180,10 @@ void write_file(u32 s, bool append) {
 	}
 	else cerr << "Unable to open " << fn << " for writing" << endl;
 }
+#endif
+
 // system
+#ifndef _WIN32
 string shell(const char* f, ...) {
 	const int len = 0xfff;
 	char buf[len];
@@ -154,7 +224,6 @@ pid_t pn2pid(string pn_s) {
 	log("'%s' is not running\n", pn_s.c_str());
 	return 0;
 }
-
 void send_signal(pid_t pid, int sig) {
 	if (!pid) return;
 	ostringstream cmd_k;
@@ -174,7 +243,10 @@ string home_dir() {
 	struct passwd *pw = getpwuid(getuid());
 	return string(pw->pw_dir);
 }
+#endif
+
 // time
+#ifndef _WIN32
 double seconds() {
     timeval tv;
     gettimeofday(&tv, NULL);
@@ -187,7 +259,9 @@ string time_hm() {
 	strftime(buf, len, "%H:%M", localtime(&t));
 	return string(buf);
 }
+#endif
 #ifdef _WIN32
+
 // other
 void COMMON_API OutputDebugStringEx(const wchar_t* format, ...) {
 	wchar_t buffer[1024*8];
@@ -201,10 +275,13 @@ wstring COMMON_API GetLastErrorEx() {
 	LPVOID lpMsgBuf;
 	LPVOID lpDisplayBuf;
 	DWORD dw = GetLastError();
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);	
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
 	return wstring((LPWSTR)lpMsgBuf);
 }
-// window
+
+// windows
+
+#ifndef __MINGW32__
 wstring WMTranslate(UINT message) {
 	switch(message) {
 	case WM_ACTIVATE: return L"WM_ERASEBKGND";
@@ -224,7 +301,7 @@ wstring WMTranslate(UINT message) {
 	case WM_NCMOUSELEAVE: return L"WM_NCMOUSELEAVE";
 	case WM_PRINTCLIENT: return L"WM_PRINTCLIENT";
 	}
-	return Format(L"0x%x", message);
+	return format(L"0x%x", message);
 }
 
 wstring WSTranslate(LONG style) {
@@ -294,37 +371,312 @@ wstring WSEXTranslate(LONG style) {
 	if(style&WS_EX_APPWINDOW) s += L"WS_EX_APPWINDOW|";
 	return s;
 }
+
+// virtual keycodes names
+wstring VKToString(int KeyCode) {
+	// Default value
+	wchar_t KeyStr[64] = {0};
+	GetKeyNameText(MapVirtualKey(KeyCode, MAPVK_VK_TO_VSC) << 16, KeyStr, 64);
+	wstring KeyString = KeyStr;
+
+	switch(KeyCode)	{
+		// Give it some help with a few keys
+		case VK_END: return L"END";
+		case VK_INSERT: return L"INS";
+		case VK_DELETE: return L"DEL";
+		case VK_PRIOR: return L"PGUP";
+		case VK_NEXT: return L"PGDN";
+
+		case VK_UP: return L"UP";
+		case VK_DOWN: return L"DOWN";
+		case VK_LEFT: return L"LEFT";
+		case VK_RIGHT: return L"RIGHT";
+
+		case VK_LSHIFT: return L"LEFT SHIFT";
+		case VK_LCONTROL: return L"LEFT CTRL";
+		case VK_RCONTROL: return L"RIGHT CTRL";
+		case VK_LMENU: return L"LEFT ALT";
+
+		default: return KeyString;
+	}
+}
+#endif
+
 HWND FindWindowByTitle(wstring find, bool exact) {
 	wchar_t _title[256];
 	HWND hWnd = GetForegroundWindow();
+
 	while (hWnd != NULL) {
 		int len = GetWindowText(hWnd, _title, 256);
 		wstring title(_title);
 		DWORD PID;
 		GetWindowThreadProcessId(hWnd, &PID);
+
 		if (GetCurrentProcessId() == PID) {
 			if (exact) {
-				if (!title.compare(find)) break;
+				if (!title.compare(find))
+					break;
 			} else {
-				if (!title.compare(0, find.length(), find)) break;
+				if (!title.compare(0, find.length(), find))
+					break;
 			}
-		}		
+		}
 		hWnd = GetNextWindow(hWnd, GW_HWNDNEXT);
 	}
+
 	if (!hWnd)
-		OutputDebugStringEx(L"§Unable to find a window with the specified title.");
+		OutputDebugStringEx(L"Unable to find window \"%s\"", find.c_str());
 	else
-		OutputDebugStringEx(L"§HWND: 0x%x", hWnd);
+		OutputDebugStringEx(L"HWND: 0x%x", hWnd);
+
 	return hWnd;
 }
+
 wstring GetClassNameEx(HWND hWnd) {
 	wchar_t buf[256];
 	GetClassName(hWnd, buf, 256);
 	return wstring(buf);
 }
+
 wstring GetWindowTextEx(HWND hWnd) {
 	wchar_t buf[256];
 	GetWindowText(hWnd, buf, 256);
 	return wstring(buf);
+}
+
+void OverrideWndProc(WNDPROC pWndProc, WNDPROC WindowProc, HWND hWnd) {
+	if (!IsWindow(hWnd)) return;
+	if (!(pWndProc = (WNDPROC)GetWindowLongPtr(hWnd, GWLP_WNDPROC)))
+		OutputDebugStringEx(L"pOldWndProc: %s", GetLastErrorEx().c_str());
+	if (!SetWindowLongPtr(hWnd, GWLP_WNDPROC, LONG_PTR(WindowProc)))
+		OutputDebugStringEx(L"SetWindowLongPtr: %s", GetLastErrorEx().c_str());
+}
+
+void ChangeStyle(HWND hWnd, LONG style) {
+	SetWindowLong(hWnd, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
+}
+
+HWND SetWindowTextEx(wstring text) {
+	HWND hWnd = GetConsoleWindow();
+	SetWindowText(hWnd, text.c_str());
+	return hWnd;
+}
+
+void SetIcon(LPCTSTR icon) {
+	HMODULE hMainMod = GetModuleHandle(NULL);
+	HICON hMainIcon = ::LoadIcon(hMainMod, icon);
+	HMODULE hMod = LoadLibraryA("Kernel32.dll");
+	typedef BOOL (CALLBACK *InsHook)(unsigned long, HANDLE);
+	typedef DWORD (__stdcall *SCI)(HICON);
+	SCI pfnSetConsoleIcon = reinterpret_cast<SCI>(GetProcAddress(hMod, "SetConsoleIcon"));
+	pfnSetConsoleIcon(hMainIcon);
+	FreeLibrary(hMod);
+}
+
+void SetAppID(HWND hWnd, wstring appId) {
+	IPropertyStore *pps;
+	HRESULT hr = SHGetPropertyStoreForWindow(hWnd, IID_PPV_ARGS(&pps));
+	if (SUCCEEDED(hr)) {
+		PROPVARIANT pv;
+		hr = InitPropVariantFromString(appId.c_str(), &pv);
+		if (SUCCEEDED(hr)) {
+			hr = pps->SetValue(PKEY_AppUserModel_ID, pv);
+			PropVariantClear(&pv);
+		}
+		pps->Release();
+	}
+}
+
+// windows console
+
+namespace Console {
+// background color
+const int SCR_BACKGROUND = BACKGROUND_BLUE;
+// save the initial console window location
+int ConsoleLeft, ConsoleTop, ConsoleIconic = 0;
+
+// colors
+void RegularText() {
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	WORD Color = FOREGROUND_RED | FOREGROUND_GREEN |  FOREGROUND_BLUE | SCR_BACKGROUND;
+	SetConsoleTextAttribute(hConsole, Color);
+}
+void BrightText() {
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	WORD Color = FOREGROUND_RED | FOREGROUND_GREEN |  FOREGROUND_BLUE | FOREGROUND_INTENSITY | SCR_BACKGROUND;
+	SetConsoleTextAttribute(hConsole, Color);
+}
+void BlueBackground() {
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	WORD Color = SCR_BACKGROUND;
+	SetConsoleTextAttribute(hConsole, Color);
+}
+void BlackBackground() {
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	WORD Color = NULL;
+	SetConsoleTextAttribute(hConsole, Color);
+}
+void WhiteLine() {
+	RegularText();
+	wprintf(L"                %c%c%c----", 250, 250, 250);
+	BrightText();
+	wprintf(L"--------");
+	RegularText();
+	wprintf(L"----%c%c%c      \n", 250, 250, 250);
+
+}
+void PrintMessage(wstring Str[3], int Rows) {
+	wprintf(L"\n");
+	for (int i = 0; i < Rows; i++) {
+		WhiteLine();
+		wprintf(L"%s", Str[i].c_str());
+	}
+}
+
+// window status
+void ShowWindowNoAnimate(HWND hWnd, int nCmdShow) {
+   // Save the minimize window anitation parameter
+   ANIMATIONINFO ai;
+   ai.cbSize = sizeof(ai);
+   SystemParametersInfo(SPI_GETANIMATION, sizeof(ai), &ai, 0);
+
+   int nMinAnimate = ai.iMinAnimate;
+
+   // No animation
+   ai.iMinAnimate = 0;
+   SystemParametersInfo(SPI_SETANIMATION, sizeof(ai), &ai, 0);
+
+   // ShowWindow()
+   ShowWindow(hWnd, nCmdShow);
+
+   // Restore animation
+   ai.iMinAnimate = nMinAnimate;
+   SystemParametersInfo(SPI_SETANIMATION, sizeof(ai), &ai, 0);
+}
+
+// save console position and status
+void Position() {
+	RECT Rc;
+	GetWindowRect(GetConsoleWindow(), &Rc);
+	ConsoleLeft = Rc.left;
+	ConsoleTop = Rc.top;
+
+	#ifdef LOGGING
+		wprintf(L"Position(): Left: %i Top:%i Iconic:%i\n", ConsoleLeft, ConsoleTop, ConsoleIconic);
+	#endif
+}
+
+void SetIconic() {
+	if (IsIconic(GetConsoleWindow()))
+		ConsoleIconic = 1;
+	else
+		ConsoleIconic = 0;
+}
+
+// console letter space
+void LetterSpace() {
+	// Redraw the screen
+	#ifndef LOGGING
+		BlueBackground();
+		ClearScreen();
+	#endif
+
+	// Console handle
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	// Console size
+	#ifdef LOGGING
+		int Width = 93;
+	#else
+		int Width = 53;
+	#endif
+
+	int Height = 13;
+
+	// Get console info
+	CONSOLE_SCREEN_BUFFER_INFO ConInfo;
+	GetConsoleScreenBufferInfo(hConsole, &ConInfo);
+
+	// Change the screen buffer window size
+	SMALL_RECT coo = {0,0, Width, Height}; // top, left, right, bottom
+	bool SW = SetConsoleWindowInfo(hConsole, TRUE, &coo);
+
+	// Change screen buffer to the screen buffer window size
+	COORD Co = {Width + 1, Height + 1};
+	bool SB = SetConsoleScreenBufferSize(hConsole, Co);
+
+	// Resize the window too
+	MoveWindow(GetConsoleWindow(), ConsoleLeft,ConsoleTop, (Width*8 + 50),(Height*12 + 50), true);
+
+	// Minimize if it was minimized
+	if (ConsoleIconic) ShowWindowNoAnimate(GetConsoleWindow(), SW_MINIMIZE);
+
+	#ifdef LOGGING
+		//wprintf(L"LetterSpace(): [SB:%i SW:%i] X:%i Y:%i W:%i | W:%i H:%i\n", SB, SW, ConInfo.dwSize.X, ConInfo.dwSize.Y,
+		//	(ConInfo.srWindow.Right - ConInfo.srWindow.Left), Width, Height);
+		wprintf(L"LetterSpace(): L:%i T:%i Iconic:%i\n", ConsoleLeft, ConsoleTop, ConsoleIconic);
+	#endif
+}
+void PixelSpace(int Left, int Top, int Width, int Height) {
+	// Clear the screen
+	#ifndef LOGGING
+		BlackBackground();
+		ClearScreen();
+	#endif
+
+	// Console handle
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	// Get console info
+	CONSOLE_SCREEN_BUFFER_INFO ConInfo;
+	GetConsoleScreenBufferInfo(hConsole, &ConInfo);
+
+	// Letter space
+	int LWidth = floor((float)(Width / 8));
+	int LHeight = floor((float)(Height / 12));
+
+	// Change the screen buffer window size
+	SMALL_RECT coo = {0,0, LWidth, LHeight}; // top, left, right, bottom
+	bool SW = SetConsoleWindowInfo(hConsole, TRUE, &coo);
+
+	// Change screen buffer to the screen buffer window size
+	COORD Co = {LWidth + 1, LHeight + 1};
+	bool SB = SetConsoleScreenBufferSize(hConsole, Co);
+
+	// Resize the window too
+	MoveWindow(GetConsoleWindow(), Left,Top, (Width*8 + 50),(Height*12 + 50), true);
+
+	// Logging
+	//wprintf(L"[SB:%i SW:%i] X:%i Y:%i W:%i | W:%i H:%i\n", SB, SW, ConInfo.dwSize.X, ConInfo.dwSize.Y,
+	//	(ConInfo.srWindow.Right - ConInfo.srWindow.Left), Width, Height);
+}
+
+// clear console screen
+void ClearScreen() {
+	COORD coordScreen = { 0, 0 };
+	DWORD cCharsWritten;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	DWORD dwConSize;
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	GetConsoleScreenBufferInfo(hConsole, &csbi);
+	dwConSize = csbi.dwSize.X * csbi.dwSize.Y;
+	FillConsoleOutputCharacter(hConsole, TEXT(' '), dwConSize, coordScreen, &cCharsWritten);
+	GetConsoleScreenBufferInfo(hConsole, &csbi);
+	FillConsoleOutputAttribute(hConsole, csbi.wAttributes, dwConSize, coordScreen, &cCharsWritten);
+	SetConsoleCursorPosition(hConsole, coordScreen);
+}
+
+// Disable Cursor
+void DisableCursor() {
+    CONSOLE_CURSOR_INFO info;
+	HANDLE hOutput = GetStdHandle (STD_OUTPUT_HANDLE);
+
+	// Turn the cursor off
+	info.bVisible = FALSE;
+	info.dwSize = 1;
+    if (SetConsoleCursorInfo(hOutput,&info) == 0) {
+	}
+}
 }
 #endif
