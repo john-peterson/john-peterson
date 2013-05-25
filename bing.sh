@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 # Bing image downloader
 # © John Peterson. License GNU GPL 3.
 bing_url="http://www.bing.com"
