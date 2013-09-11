@@ -8,7 +8,6 @@ $usage = 'Usage: smarterr.php inpath outpath';
 
 // Exceptions
 if (!isset($argv[2])) { echo $usage.PHP_EOL; return; }
-if (!is_dir($argv[1])) { echo $argv[1]." is not a directory".PHP_EOL; return; }
 
 /**
  * XML decode.
@@ -22,16 +21,25 @@ function xml_entity_decode($str) {
  * Append tail slash.
  */
 function append_slash($path) {
-	if ($path[strlen($path)-1] != '\\') $path.='\\';
+	if ($path[strlen($path)-1] != DIRECTORY_SEPARATOR)
+		$path .= DIRECTORY_SEPARATOR;
 	return $path;
+}
+
+/**
+ * Replace dir delimiter
+ */
+function dox2unix($s) {
+	return str_replace('\\', '/', $s);
 }
 
 /**
  * Return dirname (with UNC path support).
  */
 function pathinfo_dirname($path) {
-	if (is_dir($path)) $path = append_slash($path);
-	$path = substr($path, 0, strrpos($path,'\\'));
+	if (is_dir($path))
+		$path = append_slash($path);		
+	$path = substr($path, 0, strrpos($path, DIRECTORY_SEPARATOR));	
 	return $path;
 }
 
@@ -39,7 +47,7 @@ function pathinfo_dirname($path) {
  * Return dir excluding drive.
  */
 function pathinfo_dirnext($path, $needle = '\\') {
-	return substr($path, strpos($path, $needle)+strlen($needle));
+	return substr($path, strpos($path, $needle) + strlen($needle));
 }
 
 /**
@@ -59,7 +67,7 @@ function mkdir_recursive($pathname, $mode = 0777) {
  */
 function is_music_file($s) {
 	$e = pathinfo($s, PATHINFO_EXTENSION);
-	$x = array("ogg","mp3","wma");
+	$x = array('ogg', 'aac', 'mp3', 'wma');
 	if (array_search($e, $x) !== false) return true;
 	return false;
 }
@@ -69,8 +77,12 @@ function is_music_file($s) {
  */
 function copy2($from, $to) {
 	echo "Copy\t$from\n\t-> $to\n";
-	if (file_exists($to)) return;
-	if (!mkdir_recursive(pathinfo_dirname($to))) echo "Failed to create\t".dirname($to);
+	if (file_exists($to))
+		return;
+	
+	if (!mkdir_recursive(pathinfo_dirname($to)))
+		echo "Failed to create\t".dirname($to);
+		
 	if (!@copy($from, $to)) {
 		echo "Failed to copy\t$from\n\t\t-> $to";
 		exit();
@@ -121,16 +133,24 @@ function dir_recursive($path, $list = array()) {
  * @param string array $to The target directory paths.
  */
 function copy_list($from, $to) {
-	for($i = 0; $i < count($from); $i++)	
+	for($i = 0; $i < count($from); $i++)
 		copy2($from[$i], $to[$i]);
 	echo "\nCopied ".count($from)." files\n";
 }
 
 // collect wpl files
 function list_wpl($from, $to) {
-	$lfrom = array(); $lto = array();
+	$lfrom = array();
+	$lto = array();
+
+	// not a folder
+	if (!is_dir($from)) {
+		list($lfrom, $lto) = parse_wpl(file($from), $from, $to);
+		return array($lfrom, $lto);
+	}
+
 	if ($handle = opendir($from)) {
-		while (false !== ($entry = readdir($handle))) {			
+		while (false !== ($entry = readdir($handle))) {
 			if (is_dir(append_slash($path).$entry)) {
 				// if ($entry != "." && $entry != "..") {
 				// }
@@ -147,21 +167,38 @@ function list_wpl($from, $to) {
 
 // parse wpl
 function parse_wpl($lines, $from, $to) {
-	$lfrom = array(); $lto = array();
+	$lfrom = array();
+	$lto = array();
+
 	foreach ($lines as $i => $line) {
 		if (strpos($line, '<media')) {
-			$elem = explode('"',$line);
+			$elem = explode('"', $line);
 			$path_from = xml_entity_decode(utf8_decode($elem[1]));
-			if (!is_music_file($path_from)) continue;
+
+			if (!is_music_file($path_from))
+				continue;
+				
 			// relative path
-			if (!strncmp($path_from, '..\\', 3) || (!strncmp($path_from, '\\', 1) && strncmp($path_from, '\\\\', 2))) {
-				$lfrom[] = append_slash(pathinfo_dirname($from)).$path_from;
-				$lto[] = append_slash(pathinfo_dirname($to)).pathinfo_dirnext($path_from);
+			if (!strncmp($path_from, '..\\', 3) || (!strncmp($path_from, '\\', 1)			
+			// not a UNC path
+			&& strncmp($path_from, '\\\\', 2))) {
+				$_lfrom = append_slash(pathinfo_dirname($from)) . $path_from;
+				$_lto = append_slash($to) . pathinfo_dirnext($path_from);
+				
 			// absolute path: assume source paths is called 'Music' and use source path after '...Music\' as target path
 			} else {
-				$lfrom[] = $path_from;
-				$lto[] = append_slash(pathinfo_dirname($to)).pathinfo_dirnext($path_from, 'Music\\');
+				$_lfrom = $path_from;
+				$_lto = append_slash($to) . pathinfo_dirnext($path_from, 'Music\\');
 			}
+
+			// replace path delimiter
+			if (DIRECTORY_SEPARATOR == '/') {
+				$_lfrom = dox2unix($_lfrom);
+				$_lto = dox2unix($_lto);
+			}
+			
+			$lfrom[] = $_lfrom;
+			$lto[] = $_lto;
 		}
 	}
 	return array($lfrom, $lto);
