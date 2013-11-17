@@ -49,10 +49,10 @@
 	# use server 1385, transmit 30 MiB (size 7) up and down for the test
 	speed.php 1385 7
 
-**speed.stream.php** Measure roundtrip throughput with a justin.tv media server. Currently only a unidirectional throughput test is avaliable (in XSplit) and the bidirectional rate can differ significantly from the unidirectional rate.
+**speed.stream.php** Measure bidirectional bandwidth with a RTMP server. Useful because only a unidirectional throughput test is avaliable (in XSplit) and the bidirectional rate can differ from the unidirectional rate
 
-	# stream the file $v for 30 s for each of the specified bitrates
-	speed.stream.php -v"$v" -s'rtmp://media/live/stream' -S30 -b'20000 10000 5000 1000'
+	# stream 30 s of $v for the specified bitrates
+	speed.stream.php -v "$v" -s 'rtmp://media/live/stream' -S 30 -b '20000 10000 5000 1000'
 
 
 
