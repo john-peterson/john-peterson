@@ -1,0 +1,13 @@
+#!/bin/bash
+# run command n times
+# License: GNU GPL 3
+
+t=$1
+shift
+
+if [ -z "$t" ]; then echo -e "Usage: loop <interval> <command>"; exit 0; fi
+
+while true; do
+	$@
+	sleep $t
+done
