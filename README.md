@@ -86,11 +86,6 @@
 
 	envupdate
 
-**SndVol** Makes `SndVol.exe` (Windows Volume Mixer) resizable by changing its `GWL_STYLE` and overriding its `WindowProc`.
-
-	# keep loader window open to allow pinning to taskbar
-	SndVol --wait
-
 **mmsys** Makes `mmsys.cpl` resizable by changing its `GWL_STYLE` and overriding its `WindowProc`.
 
 	mmsys
