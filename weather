@@ -1,0 +1,63 @@
+#a!/bin/env bash
+# exec &> >(tee ~/sync.log)
+# exec &> >(les)
+# exec > >(les)
+
+g=~/gps
+i=~/nrk
+f=~/weather
+j=~/weather.json
+r=~/rain
+
+# getprop|ack airp|ack 1 && exit
+# age=$(stat -c%Y $f)
+# limit=$((EPOCHSECONDS - 6 * 3600))
+# if $(($age < $limit)); then
+test "$1" = -g &&	rm $g
+test "$1" = -r &&	rm $f
+
+if ! test -f $g; then
+	termux-api-start
+	termux-location|jq -r '"\(.latitude),\(.longitude)"' > $g
+fi
+
+gps=$(cat $g)
+
+if ! test -f $f; then
+	curl -s v2.wttr.in/$gps?T > $f
+	curl -s wttr.in/$gps?format=j1  > $j
+	finger -- $gps@graph.no > $i
+fi
+
+n=$(cat $i)
+w=$(cat $f|sed 's/\xf//g'|sed 's/\xef\xb8\x8f//g')
+c=$(tput cols)
+h=$(date +"%H")
+hn=$(((EPOCHSECONDS - $(stat -c%Y $i) + 3600/2) / 3600))
+
+# echo c=$c
+# echo h=$h
+# echo hn=$hn
+# echo gps=$gps
+
+# echo "$n"
+# echo "$n"|colrm $c
+# echo "$n"|colrm 4 $h|colrm $c
+echo "$n"|tail -19|head -15|colrm 4 $((4+$hn*3))|colrm $c
+
+
+echo
+# echo "$w"
+# echo "$w"|colrm 5 $((5+$h))|colrm $c
+# echo "$w"|head -20|colrm 5 $((5+$h))|colrm $c
+echo "$w"|tail -26|head -13|colrm 1 $h|colrm $c
+
+echo
+echo "$w"|grep Location
+echo "$w"|grep Now
+echo "$w"|grep Dusk
+
+echo
+echo "$n"|tail -3|head -2
+
+# jq '.weather[].hourly[] | "\(.time),\(.chanceofrain)"' $j
