@@ -1,0 +1,231 @@
+#!/bin/env bash
+
+# TERMINAL BROWSER FOR VIM CODERS 
+
+function cf() {
+  db=~/.mozilla/firefox/*.default-default/cookies.sqlite
+  # echo "select * from moz_cookies"|sqlite3 $db|ack cf_clear|  grep -o -P '(?<=cf_clearance\|).*(?=\|.stack)'
+	echo "select * from moz_cookies"|sqlite3 $db -json|ack cf_clear|ack stack |jq -r .value
+
+# db="$HOME/.config/chromium/Default/Cookies"
+	# echo "select * from cookies"|sqlite3 $db -json|ack cf_clear|ack stack |jq .
+    # SELECT name,encrypted_value FROM cookie WHERE host_key = "foobar.com";
+}
+# cf
+# exit
+
+isday() {
+read -t1 -rs -d \\ -p $'\e]11;?\e\\' bg
+bg=$(echo $bg | xxd -c 25 | cut -d/ -f2)
+if test "$(pastel format name $bg)" = white; then
+	echo true
+else
+	echo false
+fi
+}
+
+if $(isday); then
+	# export NO_COLOR=true
+	export GLAMOUR_STYLE=light
+else
+	export GLAMOUR_STYLE=dracula
+fi
+
+test $TERM = screen-256color && export TERM=xterm-256color
+
+function ghraw() {
+	local u n p
+# g|$vim -
+u=$(echo $@ | sed s,blob,raw,)
+n=$(basename $u)
+p=~/tmp
+test -f $p/$n || wget $u -P $p
+vim $p/$n
+}
+
+broken=(
+https://answers.microsoft.com/en-us/windows/forum/all/ssh-login-to-microsoft-account-linked-windows/69ea0428-5b06-401c-bb86-e45228709e0b
+https://youtrack.jetbrains.com/issue/GO-7100/Support-commenting-in-go.mod-file
+https://developer.arm.com/Architectures/Valhall
+https://android.stackexchange.com/questions/232387/
+https://www.nvidia.com/en-us/geforce/forums/legacy-products/12/182006/add-touch-screen-mapping-for-streaming-pc-games/
+https://x.com/RobbyKraft/status/971534867426144257
+)
+
+agents=(
+Links
+Lynx
+Gecko
+Firefox
+Chrome
+"Lynx/2.8.9rel.1 libwww-FM/2.14 SSL-MM/1.4.1 OpenSSL/3.4.1"
+"Mozilla/5.0 (Android 13; Mobile; rv:133.0) Gecko/133.0 Firefox/133.0"
+"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
+)
+
+# while getopts "qr" a; do
+car=false
+cro=false
+curl=false
+fox=false
+html=false
+imp=false
+js=false
+raw=false
+x=false
+for a in $@; do
+	case $a in
+			-x) set -x
+				x=true
+# shift
+# shift $(($OPTIND-1))
+;;
+		-a) agent="${@: -1}"; break ;;
+		-c) curl=true ;;
+	-ca) car=true;;
+		-cf) url=${broken[3]} ;;
+	-cm) cro=true;;
+	-f) fox=true;;
+	-h) html=true;;
+	-i) imp=true;;
+	-j) js=true;;
+		-r) raw=true ;;
+			# eval "$links $u | $pager"
+		# exit;;
+	*) u+=$a 
+		# ((OPTIND++))
+			;;
+esac
+done
+
+# parse broken pasted links
+# u="$u"|tr -d " \n|"
+u=$(echo $u|sed "s,[\ |\n],,g"|grep -Eo 'https?://[^ ]+'|sed 's/\.$//')
+host=$(echo $u | awk -F'[/:]' '{print $4}')
+path=$(echo $u | gawk -F'(https?://[^/]+|?)' '$0=$2')
+file=$(basename $u)
+
+if $x; then
+echo u=$u
+echo host=$host
+echo path=$path
+echo file=$file
+echo agent=$agent
+# exit
+read -p "open page?"
+fi
+ 
+# conf
+links="links -dump"
+# pager=less
+pager="vim -R --not-a-term -"
+# test -n "$PAGER" && pager="$PAGER"
+test "$pager" = less && pager="less -+F"
+browser="$links \"$u\" | $pager"
+
+test -n "$agent" && curl -sLA "$agent" $u | lynx -stdin -dump | $pager && exit
+$car && carbonyl $u && exit
+$cro && chromium-browser --enable-logging --headless --disable-gpu --dump-dom $u|lynx -stdin -dump| $pager && exit
+$curl && eval "curl -sLA Gecko $u | lynx -stdin -dump | eval $pager" && exit
+$fox && browsh $u && exit
+$html && eval "links $u" && exit
+$imp && curl_chrome116 -sLA Gecko $u | lynx -stdin -dump | $pager && exit
+$js && elinks $u -dump | eval $pager;
+$raw && eval "$links $u | $pager" && exit
+
+agent=${agents[$(($RANDOM%3))]}
+
+
+case $host in
+# cloud flare 
+x.com|askubuntu.com|*serverfault.com|*superuser.com|*stackexchange.com|stackoverflow.com)
+# carbonyl $u
+termux-open-url $u mark.via.gp
+exit
+agent='Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0'
+# echo agent=$agent
+cookie="cf_clearance=$(cf)"
+# echo cookie=$cookie
+# curl -s https://$host/cdn-cgi/trace
+# links -dump $u |  les
+	# links -dump $u | sed -nr '/Learn more about [Labs|Teams]/,$p' | sed '/Browse other questions tagged/q' | eval $pager
+# curl-impersonate \
+#  --http2-no-server-push  --alps --tls-permute-extensions --cert-compression brotli \
+# curl \
+# curl-impersonate \
+# -H 'X-Requested-With: XMLHttpRequest' \
+# -H 'sec-ch-ua-mobile: ?0' \
+# -H 'Accept-Encoding: gzip, deflate, br' \
+# --http2  --compressed --tlsv1.2  \
+# $G/opt/curl-impersonate/bin/curl \
+# curl_firefox133 \
+curl_chrome124 \
+-A "$agent" \
+-sLv -b "$cookie" \
+--referer https://$host \
+	$u | lynx -stdin -dump | less -F
+	;; 
+
+	# bad pre processing 
+*ibm.com|*linux.org|linuxize.com|linux.die.net|*linuxquestions.org|*linuxmint.com)	curl -sLA "$agent" $u | lynx -stdin -dump | eval $pager;;
+
+# header killer
+developer.android.com) 
+	case $u in
+		*reference*) links -dump $u | sed -nr '/java.lang.Object|Artifact:/,$p' 2>/dev/null | sed '/easyToUnderstand/q' | $pager ;;
+		*) eval $browser ;;
+	esac ;;
+source.android.com) links -dump $u | sed -n '/Core Topics/,$p' 2>/dev/null | sed '/easyToUnderstand/q' | $pager ;;
+cloud.google.com) links -dump $u | sed -nr '/Send feedback|Stay organized with collections/,$p' 2>/dev/null | sed '/easyToUnderstand/q' | $pager ;;
+*wikipedia.org) links -dump $u | sed -n '/From Wikipedia/,$p' | eval $pager ;; 
+
+	# custom programs 
+gist.github*.com)	gh gist view $u;;
+docs.github.com) links -dump $u | $pager;;
+github.com)
+	case $path in
+	*discussions*|*wiki*) links -dump $u | sed -nr '/Jump to bottom|Additional navigation options|Select Topic Area/,$p' | eval $pager	;; 
+		# eval $browser 
+	*issues*)	gh issue view --comments $u;;
+	*pull*)	gh pr view --comments $u;;
+	# file
+	*.*)
+	# curl -L $(echo $u | sed s,blob,raw,) | $pager;;
+	ghraw $u;;
+	*/*/*) gh repo view $u;;
+	# commit links etc should fall here
+	community*) links -dump $u | sed -n '/GitHub Community/,$p' 2>/dev/null | $pager ;;
+	*) eval $browser ;;
+	# GitHub Community
+	# *) ;;&
+	esac;;
+
+*gitlab.com)
+	case $u in
+	*issues*) glab issue view --comments $u;;
+	*) glab repo view $u;;
+	esac;;
+*gitlab*)
+	case $u in
+	*issues*) glab issue view $u;;
+	*) glab repo view $u;;
+	# *) eval $browser ;;
+	esac;;
+
+*reddit.com) rtv $u ;;
+
+*stackoverflow.com) socli -o $u ;;
+
+
+#  JavaScript never works 
+*cyberciti.biz) elinks $u -dump | eval $pager;;
+
+# last resort  ... 
+answers.microsoft.com|developer.arm.com|quora.com|*jetbrains.com)
+chromium-browser --enable-logging --headless --disable-gpu --dump-dom $u|lynx -stdin -dump| $pager
+# read -p "open in Firefox?" y
+# test "$y" = y && browsh $u
+;;
+
+*) eval $browser ;;
+esac
