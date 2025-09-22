@@ -24,12 +24,13 @@ else
 fi
 }
 
-if $(isday); then
-	# export NO_COLOR=true
-	export GLAMOUR_STYLE=light
-else
-	export GLAMOUR_STYLE=dracula
-fi
+export NO_COLOR=true
+export GH_PAGER="vim - -R"
+# if $(isday); then
+	# export GLAMOUR_STYLE=light
+# else
+	# export GLAMOUR_STYLE=dracula
+# fi
 
 test $TERM = screen-256color && export TERM=xterm-256color
 
@@ -50,6 +51,8 @@ https://developer.arm.com/Architectures/Valhall
 https://android.stackexchange.com/questions/232387/
 https://www.nvidia.com/en-us/geforce/forums/legacy-products/12/182006/add-touch-screen-mapping-for-streaming-pc-games/
 https://x.com/RobbyKraft/status/971534867426144257
+https://forums.linuxmint.com/viewtopic.php?t=374298
+https://www.linuxquestions.org/questions/linux-software-2/how-to-override-xrandr-minimum-screen-size-%5Bsolved%5D-4175599058/
 )
 
 agents=(
@@ -67,11 +70,13 @@ Chrome
 car=false
 cro=false
 curl=false
+dump=false
 fox=false
 html=false
 imp=false
 js=false
 raw=false
+via=false
 x=false
 for a in $@; do
 	case $a in
@@ -80,16 +85,18 @@ for a in $@; do
 # shift
 # shift $(($OPTIND-1))
 ;;
-		-a) agent="${@: -1}"; break ;;
+		-a) ag="${@: -1}"; break ;;
 		-c) curl=true ;;
 	-ca) car=true;;
 		-cf) url=${broken[3]} ;;
 	-cm) cro=true;;
+	-d) dump=true;;
 	-f) fox=true;;
 	-h) html=true;;
 	-i) imp=true;;
 	-j) js=true;;
 		-r) raw=true ;;
+		-v) via=true ;;
 			# eval "$links $u | $pager"
 		# exit;;
 	*) u+=$a 
@@ -104,15 +111,16 @@ u=$(echo $u|sed "s,[\ |\n],,g"|grep -Eo 'https?://[^ ]+'|sed 's/\.$//')
 host=$(echo $u | awk -F'[/:]' '{print $4}')
 path=$(echo $u | gawk -F'(https?://[^/]+|?)' '$0=$2')
 file=$(basename $u)
+agent=${agents[$(($RANDOM%3))]}
 
-if $x; then
+if $x || $curl; then
 echo u=$u
 echo host=$host
 echo path=$path
 echo file=$file
 echo agent=$agent
 # exit
-read -p "open page?"
+# read -p "open page?"
 fi
  
 # conf
@@ -123,18 +131,17 @@ pager="vim -R --not-a-term -"
 test "$pager" = less && pager="less -+F"
 browser="$links \"$u\" | $pager"
 
-test -n "$agent" && curl -sLA "$agent" $u | lynx -stdin -dump | $pager && exit
+test -n "$ag" && curl -sLA "$ag" $u | lynx -stdin -dump | less && exit
 $car && carbonyl $u && exit
-$cro && chromium-browser --enable-logging --headless --disable-gpu --dump-dom $u|lynx -stdin -dump| $pager && exit
-$curl && eval "curl -sLA Gecko $u | lynx -stdin -dump | eval $pager" && exit
+$cro && chromium-browser --enable-logging --headless --disable-gpu --dump-dom $u|lynx -stdin -dump| less && exit
+$curl && curl -sL --http2 -A "$agent" $u | lynx -stdin -dump | less && exit
+$dump && links -dump $u && exit
 $fox && browsh $u && exit
 $html && eval "links $u" && exit
 $imp && curl_chrome116 -sLA Gecko $u | lynx -stdin -dump | $pager && exit
 $js && elinks $u -dump | eval $pager;
 $raw && eval "$links $u | $pager" && exit
-
-agent=${agents[$(($RANDOM%3))]}
-
+$via && termux-open-url $u mark.via.gp && exit
 
 case $host in
 # cloud flare 
@@ -166,8 +173,13 @@ curl_chrome124 \
 	$u | lynx -stdin -dump | less -F
 	;; 
 
-	# bad pre processing 
-*ibm.com|*linux.org|linuxize.com|linux.die.net|*linuxquestions.org|*linuxmint.com)	curl -sLA "$agent" $u | lynx -stdin -dump | eval $pager;;
+# bad pre processing 
+*ibm.com|*linux.org|linuxize.com|linux.die.net|*linuxquestions.org|*linuxmint.com|ubuntuforums.org)
+	termux-open-url $u mark.via.gp
+	exit
+	agent=Gecko
+	curl -sL --http2 -A "$agent" $u | lynx -stdin -dump | less
+	;; 
 
 # header killer
 developer.android.com) 
@@ -176,8 +188,8 @@ developer.android.com)
 		*) eval $browser ;;
 	esac ;;
 source.android.com) links -dump $u | sed -n '/Core Topics/,$p' 2>/dev/null | sed '/easyToUnderstand/q' | $pager ;;
-cloud.google.com) links -dump $u | sed -nr '/Send feedback|Stay organized with collections/,$p' 2>/dev/null | sed '/easyToUnderstand/q' | $pager ;;
-*wikipedia.org) links -dump $u | sed -n '/From Wikipedia/,$p' | eval $pager ;; 
+cloud.google.com) links -dump $u | sed -nr '/Transform with|Send feedback|Stay organized with collections/,$p' 2>/dev/null | sed '/easyToUnderstand/q' | $pager ;;
+*wikipedia.org) links -dump $u | sed -rn '/From Wikipedia|Other languages/,$p' | eval $pager ;; 
 
 	# custom programs 
 gist.github*.com)	gh gist view $u;;
