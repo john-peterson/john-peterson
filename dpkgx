@@ -1,0 +1,130 @@
+#!/bin/env bash
+# set -x
+# echo dpkgx $@
+# exit
+log=$HOME/dpkg.log
+# echo dpkgx $@ | tee -a $log
+
+function dpkgx {
+echo dpkg --admindir=$dpkg_root --instdir=$root $@ >> $log
+dpkg --admindir=$dpkg_root --instdir=$root $@
+# echo dpkg $@
+# dpkg $@
+}
+
+function dpkgz {
+dpkg --admindir=$dpkg_root --instdir=$root $@
+}
+
+# cmd=$($p/readlink -f /proc/$$/exe)
+if [ -f /debian ]; then
+echo debian
+dpkgx $@
+exit
+fi
+
+case "$1" in
+"setup")
+	dpkgx --add-architecture arm64
+	mdkir -p $dpkg_root
+	cp -v $config/ld.so.conf $G/etc/
+	ldconfig
+	exit 0;;
+"test")
+	shift
+	dpkgx $@
+	exit 0;;
+esac
+
+# args=$@
+# args=("$@")
+# echo ${#args[@]}
+
+
+
+fd=1
+# for a in $@; do
+	while test $# -gt 0; do
+		# echo in $1
+		a=$1
+case "$a" in
+	"--configure") action+=$a;;
+"--pending") action+=$a;;
+"--recursive") action+=$a; folder=$2;;
+"--unpack") action+=$a;;
+"--status-fd") fd=$2;;
+"--root") root=$2;shift 2 ;;
+esac
+
+case "$1" in
+--print*|--assert*) exit 0;;
+esac
+		# echo out $1 
+	 args+=($1)
+shift
+# a=("${a[@]:1}")
+done
+
+ # for a in ${args[@]}; do
+# echo $a
+ # done
+# exit
+
+# echo $fd
+# echo $root
+# exit
+
+# test -n "$DATA" || DATA=/data/data/com.termux
+# test -n "$G" || G=$GLIBC_PREFIX
+
+echo $(date +"%H:%M:%S") dpkgx ${args[*]} | tee -a $log
+
+# test -z "$DPKGX_ROOT" && echo error DPKGX_ROOT unset source $DATA/debian/bashrc first && exit
+test -z "$root" && echo error --root unset | tee -a $log && exit
+# root=$DPKGX_ROOT
+
+# dpkg_root=$root/dpkg
+dpkg_root=$root/var/lib/dpkg
+status=$dpkg_root/status
+config=~/etc/debian
+# log=$dpkg_root/log
+
+function install {
+	for p in $@; do
+		if [[ "$p" != *.deb ]]; then continue; fi
+		name=$(dpkg -I $p|grep Package|cut -f3 -d" ")
+		echo unpacking $fd $name $p | tee -a $log
+		dpkg -x $p $root
+		echo >> $status
+		dpkg -I $p |sed -n '/Package:/,$p'|cut -c2- >> $status
+		echo "Status: install ok installed" >> $status
+		echo "status $name:arm64: unpacked" >&$fd
+done
+}
+
+case "$action" in
+	"--configure--pending")
+		echo skipping --configure | tee -a $log
+		# echo "status $name:arm64: installed" >&$fd
+		# sed -i s,"Status: install".*,"Status: install ok installed", $U/dpkg/status
+	exit 0
+	;;
+
+	"--unpack--recursive")
+		# folder=$(echo $@|awk '{print $NF}')
+		for f in $(ls $folder); do
+		echo $f
+		install $folder/$f
+	done
+		exit 0
+		;;
+	"--unpack")
+		# install $@
+		install  ${args[@]}
+	exit 0
+		;;
+esac
+
+# dpkgx $@
+dpkgx ${args[@]}
+exit 0

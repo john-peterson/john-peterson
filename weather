@@ -5,8 +5,8 @@
 
 g=~/gps
 i=~/nrk
-f=~/weather
-j=~/weather.json
+f=~/wttr
+j=~/wttr.json
 r=~/rain
 
 # getprop|ack airp|ack 1 && exit
@@ -18,7 +18,7 @@ test "$1" = -r &&	rm $f
 
 if ! test -f $g; then
 	termux-api-start
-	termux-location|jq -r '"\(.latitude),\(.longitude)"' > $g
+	termux-location -r last|jq -r '"\(.latitude),\(.longitude)"' > $g
 fi
 
 gps=$(cat $g)
@@ -32,7 +32,7 @@ fi
 n=$(cat $i)
 w=$(cat $f|sed 's/\xf//g'|sed 's/\xef\xb8\x8f//g')
 c=$(tput cols)
-h=$(date +"%H")
+h=$((1+$(date +"%H")))
 hn=$(((EPOCHSECONDS - $(stat -c%Y $i) + 3600/2) / 3600))
 
 # echo c=$c
@@ -47,10 +47,14 @@ echo "$n"|tail -19|head -15|colrm 4 $((4+$hn*3))|colrm $c
 
 
 echo
+if test -n "$w"; then
 # echo "$w"
 # echo "$w"|colrm 5 $((5+$h))|colrm $c
 # echo "$w"|head -20|colrm 5 $((5+$h))|colrm $c
 echo "$w"|tail -26|head -13|colrm 1 $h|colrm $c
+else
+echo wttr.in no response 
+fi
 
 echo
 echo "$w"|grep Location
