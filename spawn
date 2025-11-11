@@ -1,0 +1,160 @@
+#!/bin/env bash
+# vim:ft=sh
+
+g=false
+v=false
+dry=false
+
+shopt -s expand_aliases
+# for a in $@; do
+pos=()
+while [[ $# -gt 0 ]]; do
+	# echo 1=$1
+	# case $a in
+	case $1 in
+		arm) arch=$1; shift;;
+		az) c=az; shift;;
+		-d) nn=$2; shift 2;;
+		-g) g=true; shift;;
+		-n)	for a in az gcloud; do alias $a="echo $a"; done; dry=true; shift;;
+		-name) nn=$2; shift 2;;
+		-u) os=u; shift;;
+		-v) v=true; shift;;
+		-x) set -x; shift;;
+		*) pos+=("$1")
+			shift;;
+	esac
+done
+
+# echo @=$@
+# echo '$#'=$#
+# echo "#pos"=${#pos[@]}
+# set $@ d
+# test $# -eq 0 && n=d
+if test ${#pos[@]} -eq 0; then
+	n=a
+else
+	n=${pos[*]}
+fi
+# test -z "$n" && n=d
+
+# n=${pos[0]}
+# c=${pos[1]}
+
+case $n in
+	# a) cpu=1
+a) cpu=e2-micro;;
+big) disk=200; cpu=16;;
+b) cpu=s;;
+build) cpu=4; disk=20;;
+g) cpu=g1-small;;
+h) cpu=1; disk=20;;
+l) cpu=2; disk=20;;
+m) cpu=e2-medium;;
+md) cpu=e2-medium; os=d;;
+m20) cpu=e2-medium; disk=20;;
+n) cpu=4; disk=20;;
+emu) cpu=4; v=true; disk=30;;
+# gpu=1
+s) cpu=e2-small;;
+t) disk=30;;
+u) cpu=1;;
+vid) cpu=8;;
+win*) cpu=1; os=$n;;
+x) cpu=c4a-standard-1;zone=$gza;;
+# *) disk=20;;
+esac
+
+shopt -s extglob
+case $cpu in
+	n*) ;;
+	(+([0-9])) 
+		cpu=n1-standard-$cpu
+		# cpu=n2-standard-$cpu
+		;;
+	1) cpu=n1-standard-1	;;
+	8) cpu=n1-lowmem-8;;
+	16)
+		cpu=n1-standard-16
+		# cpu=n1-lowmem-16
+		;;
+	# *)	cpu=e2-micro	;;
+esac
+
+case $arch in
+	arm)
+		# n=${n}a
+		n=$arch
+		# cpu=t2a-standard-1
+		cpu=c4a-standard-1
+os="--image-project debian-cloud --image-family debian-12-arm64"
+# os="--image-project ubuntu-os-cloud --image-family ubuntu-minimal-2404-lts-arm64"
+# os="--image-project ubuntu-os-cloud --image-family ubuntu-minimal-2410-arm64"
+		zone="--zone $gza"
+esac
+
+test -n "$os" || os=u
+case $os in
+	d) os="--image-project debian-cloud --image-family debian-12";;
+	u) os="--image-project ubuntu-os-cloud --image-family ubuntu-minimal-2504-amd64";;
+	win) os="--image-project windows-cloud --image-family windows-2025";;&
+	winc) os="--image-project windows-cloud --image-family windows-2022-core";;&
+	win*) meta="--metadata enable-windows-ssh=true,sysprep-specialize-script-cmd=\"googet-noconfirm=true install google-compute-engine-ssh\"";;
+esac
+
+case $gpu in
+	1)
+		;;
+esac
+
+name=a
+echo cloud=$c
+echo arch=$arch
+echo name=$n
+echo cpu=$cpu
+echo disk=$disk
+echo meta=$meta
+echo os=$os
+
+test -z "$arch" && dt=pd-balanced
+# dt=pd-ssd
+# dt=hyperdisk-balanced
+
+test -n "$dt" && dt="--boot-disk-type=$dt"
+test -n "$disk" && ds=" --boot-disk-size=$disk"
+test -n "$nn" && n=$nn
+$v && vz=--enable-nested-virtualization
+$g && gpu="--accelerator type=nvidia-tesla-t4"
+
+case $c in
+	az)
+		# cpu=Basic_A0
+		# cpu=Standard_B1s
+		# cpu=Standard_DS1_v2
+		# s="--size=$cpu"
+		# ds=" --os-disk-size-gb 10" 
+		# i=debian11
+		i=Debian:debian-sid-daily:sid-gen2:latest
+		key=key.pub
+		scope=/subscriptions/abc/resourceGroups/abc/providers/Microsoft.Storage/storageAccounts/abc
+az vm create -n $n $ds --image $i $s --authentication-type ssh --ssh-key-values $key  --admin-username abc --storage-sku StandardSSD_LRS --priority spot --public-ip-sku=basic  --os-disk-delete-option delete --nic-delete-option delete --assign-identity=[system] --scope=$scope  --role=Contributor
+az network nsg rule create --nsg-name aNSG --name allow --priority 100 --destination-port-ranges 1-65535
+;;
+
+*)
+	# set -x
+gcloud compute instances create $n --provisioning-model spot --scopes https://www.googleapis.com/auth/devstorage.full_control $vz $dt $ds $os $zone --machine-type $cpu $gpu $meta
+$dry && exit
+echo gboot...
+sleep 20
+gboot $n
+;;
+
+esac
+
+exit
+
+# --image-project ubuntu-os-cloud --image-family ubuntu-minimal-2410-amd64
+ # --image-project ubuntu-os-cloud --image-family ubuntu-minimal-2304-amd64 
+
+# set -v
