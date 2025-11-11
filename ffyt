@@ -1,0 +1,6 @@
+# set -x
+p="echo ffmpeg"
+p=ffmpeg
+for f in "$@"; do
+$p -f lavfi -i color=c=black:s=2x2:r=5 -i "$f" -crf 0 -c:a copy -shortest  "${f%.*}.mkv"
+done

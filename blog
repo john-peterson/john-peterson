@@ -1,0 +1,221 @@
+#!/bin/env python
+
+import os
+blogId = os.getenv("blog") # put your blog ID here
+# isDraft = True # Don't change this unless you are prepared to modify the script
+# postfile = ''
+# postId = ''
+postNum = None
+# comma delimited list of labels for the post.
+# labels = 'mac os x, blogger, CLI'
+labels = None
+ 
+# Handle arguments
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("action", help="create edit list view publish")
+parser.add_argument("post", nargs="?", type=int, help="action number 1 2 3")
+parser.add_argument("--file", "-f", help="file")
+parser.add_argument("--verbose", "-v", action="store_true")
+parser.add_argument("--draft", "-d", action="store_true", help="work on drafts")
+args = parser.parse_args()
+isDraft =  args.draft
+# if args.file:
+postfile = args.file
+action = args.action
+postNum = args.post
+
+# print(args)
+# exit()
+
+# print(postfile)
+# exit()
+
+# if len(args) < 1:
+if action == None:
+	print("action missing list view etc")
+
+# action = args[0]
+
+if action in ("edit", "view"):
+	# if len(args) < 2:
+	if postNum is None:
+		print("post number missing eg 1 2 3")
+		exit(1)
+	# postNum = args[1]
+
+# Initialize the blogger service and get the blog
+from apiclient.discovery import build
+service = build('blogger', 'v3')
+
+# test connection 
+# user_info = service.users().get(userId='self').execute()
+# print(user_info)
+# exit()
+
+if blogId == None:
+	blogs = service.blogs()
+	myblogs = blogs.listByUser(userId='self').execute()
+	for blog in myblogs['items']:
+		# print(blog)
+		# print('The blog named \'%s\' is at: %s' % (blog['name'], blog['url']))
+		blogId = blog["id"]
+	# exit()
+
+if isDraft:
+	status="DRAFT"
+else:
+	status="LIVE"
+
+from pprint import pprint
+
+def num2id(silent=True):
+	global postId
+	# posts = service.posts()
+	request = service.posts().list(blogId=blogId,fetchBodies=False, orderBy="PUBLISHED",  status=status).execute()
+	# pprint(request)
+	posts = request["items"]
+	i = len(posts)
+	if postNum != None:
+		if postNum > i:
+			print("{} too high".format(postNum))
+			exit()
+	for post in posts:
+		if not silent:
+			if args.verbose:
+				print('%d %s %s' %  (i, post["published"], post['title'] ))
+			# print('%d %d %s %s %s' %  (i, int(post["id"]), post["published"], post["updated"], post['title'] ))
+			else:
+				print('%d %s' %  (i, post['title']))
+			# print(post)
+		if postNum != None:
+			# print( postNum, i, post["id"])
+			if i == postNum:
+				postId = post["id"]
+		i-=1
+
+def getpost():
+	if isDraft:
+		request = service.posts().list(blogId=blogId,fetchBodies=True, status=status).execute()
+		posts = request["items"]
+		for post in posts:
+			if postId == post["id"]:
+				return post
+	else:
+		return service.posts().get(blogId=blogId, postId=postId).execute()
+
+def isHtml(html):
+	import lxml.html
+	return lxml.html.fromstring(html).find('.//*') is not None
+
+
+# num2id()
+# exit()
+
+if action == "list":
+	num2id(False)
+	exit()
+
+
+if action == "view":
+	# print(args)
+	# postId = num2id(postNum)
+	num2id()
+	# print (postId)
+	# post = service.posts().get(blogId=blogId, postId=postId).execute()
+	post = getpost()
+	# pprint (post)
+	if not isDraft:
+		print (post["url"])
+	print (post["title"])
+	print()
+	content = post["content"]
+	if isHtml(content):
+		from html2text import HTML2Text
+		print(HTML2Text().handle(content))
+	else:
+		print(content)
+	exit()
+
+if action == "publish":
+	# pass
+	num2id()
+	post = service.posts().publish(blogId=blogId, postId=postId).execute()
+	print(post)
+	exit()
+
+if action not in ("create", "edit"):
+	exit()
+
+# Open file for reading
+body = {}
+f = open(postfile, 'r')
+
+# use template for title on first line
+title = f.readline().rstrip()
+body["title"] = title
+# print(title)
+# exit()
+
+content = f.read()
+body["content"] = content
+
+#build a label list
+if labels != None:
+	# labels_list = ""
+# else:
+	labels_list = labels.split(',')
+	body["labels"] = labels_list
+
+# # build body object
+# from datetime import datetime
+# body = {
+# "content": content,
+# "title": title,
+# "labels": labels_list,
+# # "published": "20290101",
+# # "published": "2025-11-07T10:30"
+# # "published": datetime.now().astimezone().isoformat()
+# }
+
+# print(body)
+# exit()
+
+
+if action == "create":
+#Insert the post
+
+	# exit()
+	post = service.posts().insert(blogId=blogId, body=body, isDraft=isDraft).execute()
+
+	pprint(post)
+	if(isDraft == False):
+		print("URL: %s" % post['url'])
+	print("Title: %s" % post['title'])
+	print("Is Draft: %s" % isDraft)
+	# print("Post ID: %s" % post['id'])
+	# print("Labels: %s" % post['labels'])
+
+if action == "edit":
+	# publish = not isDraft
+	num2id()
+	# print(postId)
+
+	# protect publish date
+	if isDraft:
+		post = getpost()
+		body["published"] = post["published"]
+	# body["published"] = "2025-11-04T11:16:15-08:00"
+
+	# print(postId)
+	# print(title)
+	# print(content)
+	# exit()
+
+	do = service.posts().update(blogId=blogId, postId=postId, body=body)
+	# do.setFields("content,updated,title,content")
+	post = do.execute()
+	print(post)
+	print("Title: %s" % post['title'])
+	if(isDraft == False):
+		print("URL: %s" % post['url'])

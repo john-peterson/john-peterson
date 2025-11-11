@@ -1,3 +1,37 @@
+## web
+
+static terminal web viewer 
+
+	url http://abc
+
+try to view all search results  in terminal
+
+	ddgr --url-handler url abc
+
+create az gcloud remote shell 
+
+	spawn m
+
+authorise gapi
+
+	gcloud services enable blogger youtube
+	a=https://www.googleapis.com/auth; gcloud auth application-default login --scopes=$a/cloud-platform,$a/blogger,$a/youtube --no-launch-browser --project abc 
+
+write
+
+	pandoc -o blog.html --template template --toc abc
+
+	blog create -f blog.html
+	blog edit 1 -f blog.html 
+	blog list
+	blog view 1
+
+speak
+
+	ffyt abc.opus
+	python yt abc.mkv
+
+
 ## File tools
 
 **csumtree** Recursive folder comparison. List, or write to, missing or changed files.
@@ -24,7 +58,6 @@
 	sfcex /d:z /s:x CBS.log
 
 
-
 ### S.M.A.R.T. tools
 
 **smarterr** Read error output from `smartctl` and append new errors to a file. (Useful because the disk only retain the recent errors and it can be of interest to have a more complete log of errors.)
@@ -37,9 +70,7 @@
 
 	smartest.php "ddrescue -vfdM /dev/sdb /dev/null ddrescue.log" smarterr.log
 
-	
-	
-	
+
 ## Network tools
 
 **speed.php** Measure roundtrip time and throughput to a speedtest.net server.
@@ -55,8 +86,6 @@
 	speed.stream.php -v "$v" -s 'rtmp://media/live/stream' -S 30 -b '20000 10000 5000 1000'
 
 
-
-
 ## Media tools
 
 **wplsync** Sync playlists to directory. Useful since WMP only sync to devices.
@@ -69,15 +98,11 @@
 	bing.sh
 
 
-
-
 ## Development tools
 
 **diffdiff** Assist in comparing diff files. Files unique to one of the diff files are excluded.
 
 	diffdiff.php diff1.patch diff2.patch
-
-
 
 
 ## Windows tools

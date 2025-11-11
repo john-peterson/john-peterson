@@ -1,0 +1,42 @@
+
+def list_my_videos():
+	# Retrieve the 'Uploads' playlist for the authenticated user
+	# This playlist automatically contains all uploaded videos
+	channels_response = youtube.channels().list(
+		mine=True,
+		part="contentDetails"
+	).execute()
+
+	uploads_playlist_id = channels_response["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+
+	# Retrieve videos from the 'Uploads' playlist
+	playlist_items_response = youtube.playlistItems().list(
+		playlistId=uploads_playlist_id,
+		part="snippet,contentDetails",
+		maxResults=50 # Adjust as needed, max 50 per request
+	).execute()
+
+	print("Your Uploaded Videos:")
+	for item in playlist_items_response["items"]:
+		video_title = item["snippet"]["title"]
+		video_id = item["contentDetails"]["videoId"]
+		print(f"- {video_title} (ID: {video_id})")
+		# from pprint import pprint
+		# pprint(item)
+
+def upload(file):
+	from googleapiclient.http import MediaFileUpload 
+	media = MediaFileUpload(file)
+	request = youtube.videos().insert(media_body=media,part="").execute()
+	print(request)
+
+import sys
+file = sys.argv[1]
+# print(file)
+# exit()
+
+from googleapiclient.discovery import build
+
+youtube = build("youtube", "v3")
+upload()
+# list_my_videos()

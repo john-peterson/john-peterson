@@ -1,6 +1,18 @@
 #!/bin/env bash
 
-# TERMINAL BROWSER FOR VIM CODERS 
+# TERMINAL BROWSER FOR VIM CODERS that try to support all web sites in text terminal 
+
+# add any broken links you find here
+broken=(
+https://answers.microsoft.com/en-us/windows/forum/all/ssh-login-to-microsoft-account-linked-windows/69ea0428-5b06-401c-bb86-e45228709e0b
+https://youtrack.jetbrains.com/issue/GO-7100/Support-commenting-in-go.mod-file
+https://developer.arm.com/Architectures/Valhall
+https://android.stackexchange.com/questions/232387/
+https://www.nvidia.com/en-us/geforce/forums/legacy-products/12/182006/add-touch-screen-mapping-for-streaming-pc-games/
+https://x.com/RobbyKraft/status/971534867426144257
+https://forums.linuxmint.com/viewtopic.php?t=374298
+https://www.linuxquestions.org/questions/linux-software-2/how-to-override-xrandr-minimum-screen-size-%5Bsolved%5D-4175599058/
+)
 
 function cf() {
   db=~/.mozilla/firefox/*.default-default/cookies.sqlite
@@ -44,16 +56,6 @@ test -f $p/$n || wget $u -P $p
 vim $p/$n
 }
 
-broken=(
-https://answers.microsoft.com/en-us/windows/forum/all/ssh-login-to-microsoft-account-linked-windows/69ea0428-5b06-401c-bb86-e45228709e0b
-https://youtrack.jetbrains.com/issue/GO-7100/Support-commenting-in-go.mod-file
-https://developer.arm.com/Architectures/Valhall
-https://android.stackexchange.com/questions/232387/
-https://www.nvidia.com/en-us/geforce/forums/legacy-products/12/182006/add-touch-screen-mapping-for-streaming-pc-games/
-https://x.com/RobbyKraft/status/971534867426144257
-https://forums.linuxmint.com/viewtopic.php?t=374298
-https://www.linuxquestions.org/questions/linux-software-2/how-to-override-xrandr-minimum-screen-size-%5Bsolved%5D-4175599058/
-)
 
 agents=(
 Links
@@ -105,9 +107,35 @@ for a in $@; do
 esac
 done
 
+# remove header footer if they exist 
+nohead() {
+	# echo $#
+	# exit
+	local a b c
+	a=$(links -dump $u)
+	b=$(echo "$a" | sed -nr "/$1/,\$p" 2>/dev/null)
+	if [ $# -gt 1 ]; then
+		c=$(echo "$b" | sed "/$2/q")
+	fi
+	if [ -n "$c" ]; then
+		echo "$c" | $pager
+	elif [ -n "$b" ]; then
+		echo "$b" | $pager
+	else
+		echo "$c" | $pager
+	fi
+}
+
+# pager=less
+# nohead head 
+# nohead head foot
+# exit
+
 # parse broken pasted links
 # u="$u"|tr -d " \n|"
-u=$(echo $u|sed "s,[\ |\n],,g"|grep -Eo 'https?://[^ ]+'|sed 's/\.$//')
+if [ ! -f $u ]; then
+	u=$(echo $u|sed "s,[\ |\n],,g"|grep -Eo 'https?://[^ ]+'|sed 's/\.$//')
+fi
 host=$(echo $u | awk -F'[/:]' '{print $4}')
 path=$(echo $u | gawk -F'(https?://[^/]+|?)' '$0=$2')
 file=$(basename $u)
@@ -178,25 +206,25 @@ curl_chrome124 \
 	termux-open-url $u mark.via.gp
 	exit
 	agent=Gecko
-	curl -sL --http2 -A "$agent" $u | lynx -stdin -dump | less
+	curl -sL --http2 -A "$agent" $u | lynx -stdin -dump | $pager
 	;; 
 
 # header killer
 developer.android.com) 
 	case $u in
-		*reference*) links -dump $u | sed -nr '/java.lang.Object|Artifact:/,$p' 2>/dev/null | sed '/easyToUnderstand/q' | $pager ;;
+		*reference*) nohead 'java.lang.Object|Artifact:' 'easyToUnderstand';;
 		*) eval $browser ;;
 	esac ;;
-source.android.com) links -dump $u | sed -n '/Core Topics/,$p' 2>/dev/null | sed '/easyToUnderstand/q' | $pager ;;
-cloud.google.com) links -dump $u | sed -nr '/Transform with|Send feedback|Stay organized with collections/,$p' 2>/dev/null | sed '/easyToUnderstand/q' | $pager ;;
-*wikipedia.org) links -dump $u | sed -rn '/From Wikipedia|Other languages/,$p' | eval $pager ;; 
+source.android.com) nohead 'Core Topics' 'easyToUnderstand' ;;
+cloud.google.com) nohead 'Transform with|Send feedback|Stay organized with collections' 'easyToUnderstand'  ;;
+*wikipedia.org) nohead  'From Wikipedia|Other languages'  ;; 
 
 	# custom programs 
 gist.github*.com)	gh gist view $u;;
 docs.github.com) links -dump $u | $pager;;
 github.com)
 	case $path in
-	*discussions*|*wiki*) links -dump $u | sed -nr '/Jump to bottom|Additional navigation options|Select Topic Area/,$p' | eval $pager	;; 
+	*discussions*|*wiki*) nohead 'Jump to bottom|Additional navigation options|Select Topic Area' 	;; 
 		# eval $browser 
 	*issues*)	gh issue view --comments $u;;
 	*pull*)	gh pr view --comments $u;;
