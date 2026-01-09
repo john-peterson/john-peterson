@@ -1,30 +1,43 @@
-#a!/bin/env bash
+#!/bin/env bash
+# set -x
 # exec &> >(tee ~/sync.log)
 # exec &> >(les)
 # exec > >(les)
 
-g=~/gps
-i=~/nrk
+# g=~/gps
+t=~/tmp/wttr
 f=~/wttr
 j=~/wttr.json
 r=~/rain
+i=~/nrk
 
 # getprop|ack airp|ack 1 && exit
 # age=$(stat -c%Y $f)
 # limit=$((EPOCHSECONDS - 6 * 3600))
 # if $(($age < $limit)); then
-test "$1" = -g &&	rm $g
-test "$1" = -r &&	rm $f
+# test "$1" = -g &&	rm $g
+# test "$1" = -r &&	rm $f
 
-if ! test -f $g; then
-	termux-api-start
-	termux-location -r last|jq -r '"\(.latitude),\(.longitude)"' > $g
-fi
+# if ! test -f $g; then
+# 	termux-api-start
+# 	termux-location -r last|jq -r '"\(.latitude),\(.longitude)"' > $g
+# fi
+# gps=$(cat $g)
 
-gps=$(cat $g)
+gps() {
+gps=$(termux-location -r last)
+lat=$(echo $gps|jq .latitude)
+lon=$(echo $gps|jq .longitude)
+gps=$lat,$lon
+# echo $gps
+# exit
+}
 
-if ! test -f $f; then
-	curl -s v2.wttr.in/$gps?T > $f
+# if ! test -f $f; then
+if test "$1" = -r; then
+	gps
+	curl -s v2.wttr.in/$gps?T > $t
+	test -s $f || exit
 	curl -s wttr.in/$gps?format=j1  > $j
 	finger -- $gps@graph.no > $i
 fi
@@ -40,28 +53,26 @@ hn=$(((EPOCHSECONDS - $(stat -c%Y $i) + 3600/2) / 3600))
 # echo hn=$hn
 # echo gps=$gps
 
+legend() {
+echo "$w"|grep Location
+echo "$w"|grep Now
+echo "$w"|grep Dusk
+echo "$n"|tail -3|head -2
+}
+
+echo
 # echo "$n"
 # echo "$n"|colrm $c
 # echo "$n"|colrm 4 $h|colrm $c
 echo "$n"|tail -19|head -15|colrm 4 $((4+$hn*3))|colrm $c
 
-
 echo
-if test -n "$w"; then
 # echo "$w"
 # echo "$w"|colrm 5 $((5+$h))|colrm $c
 # echo "$w"|head -20|colrm 5 $((5+$h))|colrm $c
 echo "$w"|tail -26|head -13|colrm 1 $h|colrm $c
-else
-echo wttr.in no response 
-fi
-
-echo
-echo "$w"|grep Location
-echo "$w"|grep Now
-echo "$w"|grep Dusk
-
-echo
-echo "$n"|tail -3|head -2
 
 # jq '.weather[].hourly[] | "\(.time),\(.chanceofrain)"' $j
+
+echo
+legend

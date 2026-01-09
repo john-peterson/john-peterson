@@ -32,6 +32,13 @@ speak
 	python yt abc.mkv
 
 
+## listen 
+
+listen to file from line 2000
+
+	tts book 1 2000
+
+
 ## File tools
 
 **csumtree** Recursive folder comparison. List, or write to, missing or changed files.

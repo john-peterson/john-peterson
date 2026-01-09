@@ -37,7 +37,7 @@ fi
 }
 
 export NO_COLOR=true
-export GH_PAGER="vim - -R"
+export GH_PAGER="vim - -MR"
 # if $(isday); then
 	# export GLAMOUR_STYLE=light
 # else
@@ -111,19 +111,26 @@ done
 nohead() {
 	# echo $#
 	# exit
-	local a b c
+	cache
+	local a b c 
 	a=$(links -dump $u)
+	# a=$(cache)
 	b=$(echo "$a" | sed -nr "/$1/,\$p" 2>/dev/null)
 	if [ $# -gt 1 ]; then
 		c=$(echo "$b" | sed "/$2/q")
 	fi
 	if [ -n "$c" ]; then
-		echo "$c" | $pager
+		d="$c"
+		# echo "$c" | $pager
 	elif [ -n "$b" ]; then
-		echo "$b" | $pager
+		d="$b"
+		# echo "$b" | $pager
 	else
-		echo "$c" | $pager
+		d="$a"
+		# echo "$a" | $pager
 	fi
+	echo "$d" > $t
+	$reader $t
 }
 
 # pager=less
@@ -131,14 +138,58 @@ nohead() {
 # nohead head foot
 # exit
 
+# cache file
+cache() {
+# local cache t
+# t=$cache/$file
+# test -f $t || curl $u > $t
+# test -f $t || links -dump $u > $target
+# links -dump $t | $pager
+# links -dump $t
+if [ -f $t ]; then
+	$reader $t
+	exit
+fi
+}
+
+read1() {
+# cache | $pager
+cache
+links -dump $u > $t
+$reader $t
+}
+
+
+# conf
+cache=~/tmp
+links="links -dump"
+# pager=less
+pager="vim -MR --not-a-term -"
+reader="vim -MR "
+# test -n "$PAGER" && pager="$PAGER"
+test "$pager" = less && pager="less -+F"
+# browser="$links \"$u\" | $pager"
+browser=read1
+
+# set -x
+echo $u | grep http -q
+# if [ -z $path ]; then
+if [ $? -ne 0 ]; then
+	if [ -f $u ]; then
+		links -dump $u | $pager
+	else
+		echo is this a local file or did you omit protocol 
+	fi
+	exit
+fi
+
 # parse broken pasted links
 # u="$u"|tr -d " \n|"
-if [ ! -f $u ]; then
-	u=$(echo $u|sed "s,[\ |\n],,g"|grep -Eo 'https?://[^ ]+'|sed 's/\.$//')
-fi
+u=$(echo $u|sed "s,[\ |\n],,g"|grep -Eo 'https?://[^ ]+'|sed 's/\.$//')
 host=$(echo $u | awk -F'[/:]' '{print $4}')
 path=$(echo $u | gawk -F'(https?://[^/]+|?)' '$0=$2')
 file=$(basename $u)
+t=$cache/$file
 agent=${agents[$(($RANDOM%3))]}
 
 if $x || $curl; then
@@ -147,17 +198,10 @@ echo host=$host
 echo path=$path
 echo file=$file
 echo agent=$agent
-# exit
-# read -p "open page?"
+exit
+read -p "open page?"
 fi
  
-# conf
-links="links -dump"
-# pager=less
-pager="vim -R --not-a-term -"
-# test -n "$PAGER" && pager="$PAGER"
-test "$pager" = less && pager="less -+F"
-browser="$links \"$u\" | $pager"
 
 test -n "$ag" && curl -sLA "$ag" $u | lynx -stdin -dump | less && exit
 $car && carbonyl $u && exit
@@ -188,7 +232,7 @@ cookie="cf_clearance=$(cf)"
 #  --http2-no-server-push  --alps --tls-permute-extensions --cert-compression brotli \
 # curl \
 # curl-impersonate \
-# -H 'X-Requested-With: XMLHttpRequest' \
+# -H 'X-MRequested-With: XMLHttpRequest' \
 # -H 'sec-ch-ua-mobile: ?0' \
 # -H 'Accept-Encoding: gzip, deflate, br' \
 # --http2  --compressed --tlsv1.2  \
@@ -216,6 +260,7 @@ developer.android.com)
 		*) eval $browser ;;
 	esac ;;
 source.android.com) nohead 'Core Topics' 'easyToUnderstand' ;;
+docs.oracle.com) nohead 'java.lang.Object' 'Skip navigation links';;
 cloud.google.com) nohead 'Transform with|Send feedback|Stay organized with collections' 'easyToUnderstand'  ;;
 *wikipedia.org) nohead  'From Wikipedia|Other languages'  ;; 
 
@@ -267,5 +312,6 @@ chromium-browser --enable-logging --headless --disable-gpu --dump-dom $u|lynx -s
 # test "$y" = y && browsh $u
 ;;
 
-*) eval $browser ;;
+# *) eval $browser ;;
+*) read1 ;;
 esac
