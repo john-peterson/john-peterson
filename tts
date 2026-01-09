@@ -1,0 +1,76 @@
+test ! -f $1 && exit
+
+tmux rename-window "tts/$1"
+quit() {
+tmux set automatic-rename on
+exit
+}
+
+# dumpsys activity -p com.termux.api p com.termux.api |grep -q isFrozen=true
+# if test $? -eq 0; then
+# 	$s/am freeze $(pidof com.termux.api) unf > /dev/null
+# fi
+
+# if test $1 -eq $1 2>/dev/null; then
+# test -n "$2" && v="--es voice $2"
+r=0.9
+p=0.9
+v=en-gb-x-gbd-local
+# test -z "$2" && 2=
+
+if [ $# -gt 1 ]; then
+	if [ $2 -eq 0 ]; then
+		r=0.7
+		p=0.9
+		v=en-gb-x-gbd-local
+	elif [ $2 -eq 1 ]; then
+		v=en-us-x-tpd-local
+	elif [ $2 -eq 2 ]; then
+		v=en-us-x-tpe-local
+	fi
+fi
+
+if [ $# -gt 2 ]; then
+	f=$3
+else
+	f=0
+fi
+
+key(){
+	k=$1
+	if [ "$k" = $'\e' ]; then
+		read -s -n2 -t1 k
+		# echo $k
+		test $k = "[A" && ((i+=$l/10))
+		test $k = "[B" && ((i-=$l/10))
+		test $k = "[C" &&  ((i+=$l/100))
+		test $k = "[D" &&  ((i-=$l/100))
+	elif [ "$k" = q ]; then
+		quit 
+	elif [ $# -eq 1 ]; then
+		# test "$k" = q && quit 
+		read -s -n1 -p "press key to continue  " k
+		key $k 1
+	fi
+}
+
+input() {
+	read -s -n1 -t1 k
+	test $? -ne 0 && return
+	# test "$k" = q && quit 
+	key $k
+}
+
+l=$(wc $1|tr -s " "|cut -f2 -d" ")
+i=$f
+# for i in	$(seq $f $l); do
+while [ $i -lt $l ]; do
+	echo -n "$i/$l "
+	awk "NR == $i" $1 \
+		| tee /dev/stderr \
+		| $P/libexec/termux-api TextToSpeech --ef pitch $p --ef rate $r --es voice $v
+	input
+	# sleep 1
+	((i++))
+done
+

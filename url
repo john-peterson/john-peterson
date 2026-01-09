@@ -37,7 +37,7 @@ fi
 }
 
 export NO_COLOR=true
-export GH_PAGER="vim - -R"
+export GH_PAGER="vim - -MR"
 # if $(isday); then
 	# export GLAMOUR_STYLE=light
 # else
@@ -112,7 +112,8 @@ nohead() {
 	# echo $#
 	# exit
 	local a b c
-	a=$(links -dump $u)
+	# a=$(links -dump $u)
+	a=$(cache)
 	b=$(echo "$a" | sed -nr "/$1/,\$p" 2>/dev/null)
 	if [ $# -gt 1 ]; then
 		c=$(echo "$b" | sed "/$2/q")
@@ -131,11 +132,45 @@ nohead() {
 # nohead head foot
 # exit
 
+# cache file
+cache() {
+local cache t
+cache=~/tmp
+t=$cache/$file
+test -f $t || curl $u > $t
+# links -dump $t | $pager
+links -dump $t
+}
+
+read1() {
+cache | $pager
+}
+
+
+# conf
+links="links -dump"
+# pager=less
+pager="vim -MR --not-a-term -"
+# test -n "$PAGER" && pager="$PAGER"
+test "$pager" = less && pager="less -+F"
+# browser="$links \"$u\" | $pager"
+browser=read1
+
+# set -x
+echo $u | grep http -q
+# if [ -z $path ]; then
+if [ $? -ne 0 ]; then
+	if [ -f $u ]; then
+		links -dump $u | $pager
+	else
+		echo is this a local file or did you omit protocol 
+	fi
+	exit
+fi
+
 # parse broken pasted links
 # u="$u"|tr -d " \n|"
-if [ ! -f $u ]; then
-	u=$(echo $u|sed "s,[\ |\n],,g"|grep -Eo 'https?://[^ ]+'|sed 's/\.$//')
-fi
+u=$(echo $u|sed "s,[\ |\n],,g"|grep -Eo 'https?://[^ ]+'|sed 's/\.$//')
 host=$(echo $u | awk -F'[/:]' '{print $4}')
 path=$(echo $u | gawk -F'(https?://[^/]+|?)' '$0=$2')
 file=$(basename $u)
@@ -151,13 +186,6 @@ echo agent=$agent
 # read -p "open page?"
 fi
  
-# conf
-links="links -dump"
-# pager=less
-pager="vim -R --not-a-term -"
-# test -n "$PAGER" && pager="$PAGER"
-test "$pager" = less && pager="less -+F"
-browser="$links \"$u\" | $pager"
 
 test -n "$ag" && curl -sLA "$ag" $u | lynx -stdin -dump | less && exit
 $car && carbonyl $u && exit
@@ -188,7 +216,7 @@ cookie="cf_clearance=$(cf)"
 #  --http2-no-server-push  --alps --tls-permute-extensions --cert-compression brotli \
 # curl \
 # curl-impersonate \
-# -H 'X-Requested-With: XMLHttpRequest' \
+# -H 'X-MRequested-With: XMLHttpRequest' \
 # -H 'sec-ch-ua-mobile: ?0' \
 # -H 'Accept-Encoding: gzip, deflate, br' \
 # --http2  --compressed --tlsv1.2  \
@@ -267,5 +295,6 @@ chromium-browser --enable-logging --headless --disable-gpu --dump-dom $u|lynx -s
 # test "$y" = y && browsh $u
 ;;
 
-*) eval $browser ;;
+# *) eval $browser ;;
+*) read1 ;;
 esac
