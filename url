@@ -1,5 +1,12 @@
 #!/bin/env bash
 
+# set -x
+# # lynx -dump $1|vim -
+# # vim --ttyfail test.html
+# vim  test.html
+# # vim - -q
+# exit
+
 # TERMINAL BROWSER FOR VIM CODERS that try to support all web sites in text terminal 
 
 # add any broken links you find here
@@ -26,15 +33,15 @@ function cf() {
 # cf
 # exit
 
-isday() {
-read -t1 -rs -d \\ -p $'\e]11;?\e\\' bg
-bg=$(echo $bg | xxd -c 25 | cut -d/ -f2)
-if test "$(pastel format name $bg)" = white; then
-	echo true
-else
-	echo false
-fi
-}
+# isday() {
+# read -t1 -rs -d \\ -p $'\e]11;?\e\\' bg
+# bg=$(echo $bg | xxd -c 25 | cut -d/ -f2)
+# if test "$(pastel format name $bg)" = white; then
+# 	echo true
+# else
+# 	echo false
+# fi
+# }
 
 export NO_COLOR=true
 export GH_PAGER="vim - -MR"
@@ -130,7 +137,7 @@ nohead() {
 		# echo "$a" | $pager
 	fi
 	echo "$d" > $t
-	$reader $t
+	eval $reader $t
 }
 
 # pager=less
@@ -147,7 +154,7 @@ cache() {
 # links -dump $t | $pager
 # links -dump $t
 if [ -f $t ]; then
-	$reader $t
+	eval $reader $t
 	exit
 fi
 }
@@ -156,7 +163,7 @@ read1() {
 # cache | $pager
 cache
 links -dump $u > $t
-$reader $t
+eval $reader $t
 }
 
 
@@ -164,8 +171,10 @@ $reader $t
 cache=~/tmp
 links="links -dump"
 # pager=less
-pager="vim -MR --not-a-term -"
-reader="vim -MR "
+# pager="vim -MR --not-a-term -"
+pager="vim -MR --ttyfail -"
+# reader="vim -MR --not-a-term"
+reader="vim -MR --ttyfail -c set\ ft=text"
 # test -n "$PAGER" && pager="$PAGER"
 test "$pager" = less && pager="less -+F"
 # browser="$links \"$u\" | $pager"
@@ -264,7 +273,12 @@ docs.oracle.com) nohead 'java.lang.Object' 'Skip navigation links';;
 cloud.google.com) nohead 'Transform with|Send feedback|Stay organized with collections' 'easyToUnderstand'  ;;
 *wikipedia.org) nohead  'From Wikipedia|Other languages'  ;; 
 
-	# custom programs 
+# custom programs 
+android.googlesource.com)
+	t=$cache/$file
+	test -s $t ||	curl $u?format=TEXT | base64 -d > $t
+	vim $t -MR
+;;
 gist.github*.com)	gh gist view $u;;
 docs.github.com) links -dump $u | $pager;;
 github.com)

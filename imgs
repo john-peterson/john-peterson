@@ -1,0 +1,96 @@
+#!/bin/env bash
+# terminal gallery 
+
+dry=false
+
+# set -x
+# dry=true
+
+view(){
+	if $dry; then
+		echo "$1"
+	else
+		clear
+		jhead "$f"
+		$prog "$1"
+	fi
+}
+
+if test "$1" = "head"; then
+	prog="jhead"
+	shift
+else
+	prog="img2sixel -w 720"
+fi
+
+if test "$1" = "today"; then
+	list=$(find \( -name "*.jpg" -o -name "*.webp" \) -mtime -1 -type f -print)
+
+	# number
+elif test $1 -eq $1 2>/dev/null; then
+	if [[ -n $1 ]]; then num=$1; else	num=9999; fi
+	list=$(ls -t -- *.jpg *.jpeg *.webp *.png 2>/dev/null|head -$num|shuf)
+
+elif [ $# -gt 1 ]; then
+	l=("$@")
+	# list=$(echo $@|sed "s/ /\n/g")
+	for a in "${l[@]}"; do
+		list+=$a
+		list+=$'\n'
+	done
+elif [ $# -gt 0 ]; then
+	# echo "$@"
+	list=$(echo $@|sed "s/ /\n/g")
+	# exit
+else
+	list=$(ls -- * 2>/dev/null|grep -i $1|shuf)
+fi
+
+# echo ${#list[@]}
+# echo ${list[@]}
+# echo ${list[*]}
+# echo "$list"
+# echo "$list"|head
+# exit
+
+# for f in "$list" ; do
+while IFS= read -r -d $'\n' f <&3; do
+	# echo $f
+	# exit
+	view "$f"
+	
+	# k=o
+	# while [ "$k" = o ]; do
+		read -s -n1 -p "next? (*/↑/@/q) " k
+		if [ "$k" = $'\E' ]; then
+			termux-open --view "$f"
+			read -s -n2 abc
+			k=o
+		fi
+	# done
+
+	test "$k" = q && exit
+
+	# echo pressed $k
+	# if test $k = @|:; then
+	if [[ $k =~ @|-|: ]]; then
+	# if test "$k" = @; then
+	# if test "$k" = a; then
+		t=~/img/flip.jpg
+		if test "$k" = @; then
+			convert -flip "$f" $t
+		elif test "$k" = -; then
+			convert -rotate -90 "$f" $t
+		elif test "$k" = :; then
+			convert -rotate 90 "$f" $t
+		fi
+		view $t
+		read -s -n1 -p "next?"
+	fi
+
+# done
+done 3<<<"$list"
+# done 3< <(ls -bt --zero -- *.jpg *.jpeg *.webp *.png|head -$num|shuf)
+
+
+

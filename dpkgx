@@ -3,10 +3,11 @@
 # echo dpkgx $@
 # exit
 log=$HOME/dpkg.log
+rm $log
 # echo dpkgx $@ | tee -a $log
 
 function dpkgx {
-echo dpkg --admindir=$dpkg_root --instdir=$root $@ >> $log
+echo dpkg --admindir=$dpkg_root --instdir=$root $@ | tee -a $log
 dpkg --admindir=$dpkg_root --instdir=$root $@
 # echo dpkg $@
 # dpkg $@

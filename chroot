@@ -5,13 +5,16 @@ show_usage () {
 	echo "Usage: $SCRIPTNAME [command]"
 	echo "If run without argument, the default shell will be executed"
 	echo '-g GNU root $PREFIX/glibc '
-	echo '-u Ubuntu root $FILES/ubuntu bash has to be installed and runnable'
+	echo '-u Ubuntu root $DATA/ubuntu bash has to be installed and runnable'
 	exit 0
 }
 
+bionic=false
 debian=false
 gnu=false
 ubuntu=false
+shebang=false
+test $# -eq 0 && bionic=true
 while getopts dhgu option
 do
 	case "$option" in
@@ -26,38 +29,33 @@ shift $(($OPTIND-1))
 
 if $debian; then
 ROOT=$DATA/debian
-name=/d
-elif $gnu; then
-ROOT=$FILES/usr/glibc
-# ROOT0=
-name=/g
-# ARGS+=" -b $ROOT:/usr"
+name=d
 elif $ubuntu; then
 ROOT=$DATA/ubuntu
-# ROOT0=
-name=/u
+name=u
+elif $gnu; then
+ROOT=$FILES/usr/glibc
+name=/g
+# ARGS+=" -b $ROOT:/usr"
 else
-ROOT=$PREFIX
-ROOT0=/..
+ROOT=$FILES/usr
 name=/
 fi
 
+ARGS+=" -r $ROOT"
 
-if $debian || $ubuntu; then
-	:
-else
+if $bionic || $gnu; then
 ARGS+=" -b $ROOT:/usr"
-for f in bin etc lib share var; do
-	ARGS+=" -b $ROOT/$f:/$f"
-done
-# exit
+
+# for f in bin etc lib share var; do
+# 	ARGS+=" -b $ROOT/$f:/$f"
+# done
+
 fi
 
-# Kill processes on exit to avoid hanging on exit
-ARGS+=" --kill-on-exit"
 
 ARGS+=" -b /data:/data"
-ARGS="$ARGS -b /system:/system"
+ARGS+=" -b /system:/system"
 ARGS="$ARGS -b /vendor:/vendor"
 ARGS="$ARGS -b $DATA/tmp:/tmp"
 # ARGS="$ARGS -b $ROOT/opt:/opt"
@@ -72,14 +70,11 @@ if [ -e "/linkerconfig/ld.config.txt" ]; then
 fi
 
 if [ -f /property_contexts ]; then
-	# Used by getprop (see https://github.com/termux/termux-packages/issues/1076)
-	# but does not exist on Android 8.
 	ARGS="$ARGS -b /property_contexts:/property_contexts"
 fi
 
-if [ -d /storage ]; then
-	ARGS="$ARGS -b /storage:/storage"
-fi
+ARGS+=" -b /storage:/storage"
+ARGS+=" -b /sdcard:/sdcard"
 
 for f in dev proc; do
 	ARGS="$ARGS -b /$f:/$f"
@@ -89,13 +84,14 @@ ARGS+=" -b $HOME:/home"
 
 pwd=$(pwd|sed s,$FILES,,)
 # ARGS="$ARGS --cwd=/home"
-ARGS="$ARGS --cwd=$pwd"
+ARGS+=" --cwd=$pwd"
 
-# Root of the file system:
-ARGS="$ARGS -r $ROOT$ROOT0"
+ARGS+=" --kill-on-exit"
 
 # Shell to execute:
 PROGRAM=/bin/bash
+# PROGRAM=/bin/ksh
+# PROGRAM=/bin/sh
 if [ -x $HOME/.termux/shell ]; then
 	PROGRAM=`readlink -f $HOME/.termux/shell`
 fi
@@ -107,12 +103,16 @@ export PROOT=$ROOT PROOT_NAME=$name
 # export PS1="$name \w "
 export PS1="\[\e[0;34m\]$name \[\e[0;32m\]\w\[\e[0m\] "
 # export PS1="\[\e[0;32m\]\w \[\e[0;34m\]$name \[\e[0m\]" 
+unset LD_PRELOAD
 
 # Execute shell if no command has been supplied
 if [ -z "$1" ];then
-	# ARGS="$ARGS $PROGRAM -l"
-	ARGS="$ARGS $PROGRAM "
-	echo $ARGS | sed 's,-,\n-,g'
+	# ARGS+="$PROGRAM -l"
+	ARGS+=" $PROGRAM  -i  "
+	# ARGS+=" $PROGRAM --restricted --verbose --norc --noprofile --noediting -i"
+	# ARGS+=" $PROGRAM "
+	# echo proot $ARGS 
+	# echo $ARGS | sed 's,-,\n-,g'
 	exec $PREFIX/bin/proot $ARGS
 else
 	ARGS="$ARGS --cwd=."
